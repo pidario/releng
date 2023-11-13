@@ -1,0 +1,5 @@
+qemu-guest-agent
+open-vm-tools
+virtualbox-guest-utils
+xf86-input-vmmouse
+xf86-video-vmware
