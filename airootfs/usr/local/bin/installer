@@ -63,148 +63,6 @@ SIZE=$(stty size)
 ROWS=$((${SIZE% *} - 4))
 COLS=$((${SIZE#* } - 4))
 
-mkinitcpio_install_hook () {
-	cat <<-'EOT'
-	[Trigger]
-	Type = Path
-	Operation = Install
-	Operation = Upgrade
-	Target = usr/lib/modules/*/vmlinuz
-	Target = usr/lib/initcpio/*
-
-	[Action]
-	Description = Updating linux initcpios...
-	When = PostTransaction
-	Exec = /etc/pacman.d/hooks/mkinitcpio install
-	NeedsTargets
-	EOT
-}
-
-mkinitcpio_remove_hook () {
-	cat <<-'EOT'
-	[Trigger]
-	Type = Path
-	Operation = Remove
-	Target = usr/lib/modules/*/vmlinuz
-
-	[Trigger]
-	Type = Package
-	Operation = Remove
-	Target = mkinitcpio
-	Target = mkinitcpio-git
-
-	[Action]
-	Description = Removing linux initcpios...
-	When = PreTransaction
-	Exec = /etc/pacman.d/hooks/mkinitcpio remove
-	NeedsTargets
-	EOT
-}
-
-mkinitcpio_script () {
-	cat <<-EOT
-	#!/usr/bin/env bash
-
-	set -e
-
-	args=()
-	package=0
-
-	process_preset() {
-		if [[ -n "\$pkgbase" && -e "\$preset" ]]; then
-			if ! cmp "\$preset" > /dev/null 2>&1 <(sed "s|%PKGBASE%|\${pkgbase}|g" /etc/mkinitcpio.d/kernel.preset.template); then
-				if [[ ! -e "\$preset.pacsave" ]]; then
-					# save the preset as pacsave
-					mv -- "\$preset" "\$preset.pacsave" && return 0
-				fi
-			else
-				# remove the preset
-				rm -- "\$preset" && return 0
-			fi
-		fi
-	}
-
-	install_kernel() {
-		preset="/etc/mkinitcpio.d/\${1}.preset"
-		if [[ ! -e "\$preset" ]]; then
-			if [[ -e "\$preset.pacsave" ]]; then
-				# move the pacsave to the template
-				mv -- "\${preset}.pacsave" "\$preset"
-			else
-				# create the preset from the template
-				sed "s|%PKGBASE%|\${1}|g" /etc/mkinitcpio.d/kernel.preset.template \
-				| install -Dm644 /dev/stdin "\$preset"
-			fi
-		fi
-
-		# always install the kernel (if not uki)
-		if [[ ! -e "/sys/firmware/efi/efivars" ]]; then
-			install -Dm644 "\$line" "/boot/vmlinuz-\${1}"
-		fi
-
-		# compound args for each kernel
-		args+=(-p "\$1")
-	}
-
-	remove_kernel() {
-		# remove the actual kernel and images for the package being removed
-		kernel="/boot/vmlinuz-\${1}"
-		preset="/etc/mkinitcpio.d/\${1}.preset"
-		initramfs="/boot/initramfs-\${1}.img"
-		uki="$1/Linux/arch\${1}.efi"
-		# remove the installed kernel
-		rm -f -- "\$kernel"
-
-		process_preset "\$1" "\$preset"
-
-		# remove images
-		rm -f -- "\$initramfs" "\$uki"
-	}
-
-	while read -r line; do
-		if [[ "\$line" != */vmlinuz ]]; then
-			# triggers when it's a change to usr/lib/initcpio/*
-			package=1
-			continue
-		fi
-
-		if ! read -r pkgbase > /dev/null 2>&1 < "\${line%/vmlinuz}/pkgbase"; then
-			# if the kernel has no pkgbase, we skip it
-			continue
-		fi
-
-		case "\$1" in
-			install) install_kernel "\$pkgbase";;
-			remove) remove_kernel "\$pkgbase";;
-		esac
-	done
-
-	if (( package )) && compgen -G /etc/mkinitcpio.d/"*.preset" > /dev/null; then
-		case "\$1" in
-			install)
-				# change to use all presets
-				args=(-P)
-				;;
-			remove)
-				shopt -s nullglob
-				for preset in /etc/mkinitcpio.d/*.preset; do
-					pkgbase=\${preset##*/}
-					pkgbase=\${pkgbase%.preset}
-					process_preset "\$pkgbase" "\$preset"
-				done
-				shopt -u nullglob
-				;;
-		esac
-	fi
-
-	if [[ "\$1" == "install" ]] && (( \${#args[@]} )); then
-		mkinitcpio "\${args[@]}"
-	fi
-	EOT
-}
-
-# TODO: install backgrounds (best way would be to create package at iso build-time)
-# TODO: setup pacman, add custom repositories and, if reflector is not installed, manually set pacman mirror(s)
 # TODO: let user choose one or more kernel(s); it would be nice, in case of multiple kernels, to ask if user would like to use systemd-boot (if UEFI)
 # TODO: secure boot using sbctl
 # TODO: non-interactive script
@@ -1524,7 +1382,7 @@ partition_options () {
 			else
 				DEFAULT_MP=
 				if [ "$(partition_type "$PART")" = "$EFI_UUID" ]; then
-					DEFAULT_MP=/boot
+					DEFAULT_MP=/efi
 				fi
 				MP="$(echo "$DEFAULT_MP" | sdlg --cancel-label "Back" --title "Mount Point (relative to $MNT) for $PART" --inputbox "Leave empty for '/'")"
 				exitstatus=$?
@@ -1963,7 +1821,9 @@ start_install () {
 	for f in "$TMP_PRESET"*; do
 		PACKS="$PACKS $(cat "$f" 2> /dev/null)"
 	done
+	PACKS="$(echo "$PACKS" | sed 's/linux-lts//g')"
 	CUSTOM_PACKS="$(cat "$TMP_CUSTOM_PACKS" 2> /dev/null)"
+	KERNELS="linux-lts"
 	KEYMAP="$(cat $TMP_KEYMAP 2> /dev/null)"
 	COMPOSE="$(cat $TMP_COMPOSE 2> /dev/null)"
 	TIMEZONE="$(cat $TMP_TZ 2> /dev/null)"
@@ -1996,20 +1856,11 @@ start_install () {
 	if ! (is_selected base); then
 		PACKS="$PACKS base"
 	fi
-	if ! (is_selected linux); then
-		PACKS="$PACKS linux"
-	fi
 	if ! (is_selected neovim); then
 		PACKS="$PACKS neovim"
 	fi
 	if ! (mountpoint "$MNT" > /dev/null 2>&1); then
 		msg "$MNT is not a mountpoint"
-		main disk
-	fi
-	mkdir --parents --verbose "$MNT/boot" 2>&1
-	BOOT_BD="$(mp_block_device "$MNT/boot")"
-	if [ "$(block_type "$BOOT_BD")" != "part" ]; then
-		msg "/boot must be in an unencrypted, non-LVM partition"
 		main disk
 	fi
 	if (pwd_missing root); then
@@ -2111,7 +1962,7 @@ start_install () {
 			main disk
 		fi
 		if [ "$(block_type "$ESP")" != part ]; then
-			msg "EFI partition must be in an unencrypted, non-LVM partition"
+			msg "ESP partition must be in an unencrypted, non-LVM partition"
 			main disk
 		fi
 		PT="$(partition_table_type "$ESP")"
@@ -2124,6 +1975,12 @@ start_install () {
 		if ! (is_selected syslinux); then
 			PACKS="$PACKS syslinux"
 		fi
+		mkdir --parents --verbose "$MNT/boot" 2>&1
+		BOOT_BD="$(mp_block_device "$MNT/boot")"
+		if [ "$(block_type "$BOOT_BD")" != "part" ]; then
+			msg "/boot must be in an unencrypted, non-LVM partition"
+			main disk
+		fi
 		PT="$(partition_table_type "$BOOT_BD")"
 		if [ "$PT" != dos ]; then
 			if ! (confirm "This script does not support the installation of syslinux in a $PT type disk. DOS is recommended. Continue anyway?"); then
@@ -2135,34 +1992,28 @@ start_install () {
 	if (confirm "Lang: $LANGUAGE\nKeymap: $KEYMAP\nCompose Key: $COMPOSE\nHostname: $HOSTNAME\nTimezone: $TIMEZONE\nKernel Command Line: $CMDLINE\nHooks: $HOOKS\nMethod: $METHOD\nBoot Mode: $MODE"); then
 		log "installing..."
 		{
-			mkdir --parents --verbose "$MNT/etc/kernel" "$MNT/etc/mkinitcpio.d" "$MNT/etc/pacman.d/hooks" 2>&1
+			mkdir --parents --verbose "$MNT/etc/kernel" "$MNT/etc/mkinitcpio.conf.d" "$MNT/usr/share/mkinitcpio" "$MNT/etc/pacman.d" 2>&1
 			printf "%s" "$CMDLINE" > "$MNT/etc/kernel/cmdline" 2>&1
-			{
-				echo "MODULES=()"
-				echo "BINARIES=()"
-				echo "FILES=()"
-				echo "HOOKS=($HOOKS)"
-			} > "$MNT/etc/mkinitcpio.d/mkinitcpio-custom.conf" 2>&1
+			echo "HOOKS=($HOOKS)" > "$MNT/etc/mkinitcpio.conf.d/hooks.conf" 2>&1
 			{
 				echo "# mkinitcpio preset file for the '%PKGBASE%' package"
-				echo "ALL_config=\"/etc/mkinitcpio.d/mkinitcpio-custom.conf\""
-				echo "ALL_kver=\"\$(pacman --query --list %PKGBASE% | grep vmlinuz | awk '{print \$2}')\""
+				echo "ALL_kver=\"/boot/vmlinuz-%PKGBASE%\""
+				echo "ALL_microcode=(/boot/*-ucode.img)"
 				echo "PRESETS=('default')"
 				if [ "$MODE" = UEFI ]; then
 					mkdir --parents "$MP_ESP/EFI/Linux"
-					if [ -n "$MC_PATH" ]; then
-						printf "default_microcode=\"/boot/%s\"\n" "$MC_PATH"
-					fi
-					printf "default_uki=\"%s/EFI/Linux/arch%%PKGBASE%%.efi\"\n" "${MP_ESP#"$MNT"}"
+					printf "default_uki=\"%s/EFI/Linux/arch-%%PKGBASE%%.efi\"\n" "${MP_ESP#"$MNT"}"
 					echo "default_options=\"--splash /usr/share/systemd/bootctl/splash-arch.bmp\""
 				else
 					echo "default_image=\"/boot/initramfs-%PKGBASE%.img\""
 				fi
-			} > "$MNT/etc/mkinitcpio.d/kernel.preset.template" 2>&1
-			mkinitcpio_install_hook > "$MNT/etc/pacman.d/hooks/90-mkinitcpio-install.hook" 2>&1
-			mkinitcpio_remove_hook > "$MNT/etc/pacman.d/hooks/60-mkinitcpio-remove.hook" 2>&1
-			mkinitcpio_script "${MP_ESP#"$MNT"}" > "$MNT/etc/pacman.d/hooks/mkinitcpio" 2>&1
-			chmod --verbose 0755 "$MNT/etc/pacman.d/hooks/mkinitcpio" 2>&1
+			} > "$MNT/etc/hook.preset" 2>&1
+			{
+				echo "NoUpgrade = usr/share/mkinitcpio/hook.preset"
+				echo "Color"
+				echo "ILoveCandy"
+				echo "VerbosePkgLists"
+			} > "$MNT/etc/pacman.d/custom" 2>&1
 			if [ -n "$PACKS" ]; then
 				echo "the following packages will be installed (unless already installed):"
 				echo "$PACKS"
@@ -2173,14 +2024,22 @@ start_install () {
 						echo "bootstrapping base system using offline repo"
 						pacstrap -C "$PACMAN_OFFLINE" "$MNT" 2>&1
 					fi
+					sed --in-place "s|\[options\]|\[options\]\nInclude = /etc/pacman.d/custom|" "$MNT/etc/pacman.conf"
 					arch-chroot "$MNT" pacman --config "$PACMAN_OFFLINE" --sync --refresh --sysupgrade --quiet --noprogressbar --needed --noconfirm $PACKS 2>&1
+					arch-chroot "$MNT" pacman --config "$PACMAN_OFFLINE" --sync --refresh --sysupgrade --quiet --noprogressbar --needed --noconfirm --asdeps mkinitcpio 2>&1
+					mv --verbose "$MNT/etc/hook.preset" "$MNT/usr/share/mkinitcpio/hook.preset"
+					arch-chroot "$MNT" pacman --config "$PACMAN_OFFLINE" --sync --refresh --sysupgrade --quiet --noprogressbar --needed --noconfirm $KERNELS 2>&1
 					umount --verbose "${MNT}${REPO_DIR}" 2>&1 && rm --recursive --force --verbose "${MNT}${REPO_DIR}" 2>&1
 				else
 					if ! (is_installed base); then
 						echo "bootstrapping base system"
 						pacstrap "$MNT" 2>&1
 					fi
+					sed --in-place "s|\[options\]|\[options\]\nInclude = /etc/pacman.d/custom|" "$MNT/etc/pacman.conf"
 					arch-chroot "$MNT" pacman --sync --refresh --sysupgrade --quiet --noprogressbar --needed --noconfirm $PACKS 2>&1
+					arch-chroot "$MNT" pacman --sync --refresh --sysupgrade --quiet --noprogressbar --needed --noconfirm --asdeps mkinitcpio 2>&1
+					mv --verbose "$MNT/etc/hook.preset" "$MNT/usr/share/mkinitcpio/hook.preset"
+					arch-chroot "$MNT" pacman --sync --refresh --sysupgrade --quiet --noprogressbar --needed --noconfirm $KERNELS 2>&1
 				fi
 			fi
 			if [ -n "$CUSTOM_PACKS" ]; then
@@ -2304,13 +2163,13 @@ start_install () {
 			fi
 			if [ "$MODE" = UEFI ]; then
 				echo "UKI setup"
-				if ! (efibootmgr --verbose | grep --fixed-strings "\EFI\Linux\archlinux.efi" > /dev/null 2>&1); then
-					if [ -f "$MP_ESP/EFI/Linux/archlinux.efi" ]; then
+				if ! (efibootmgr --verbose | grep --fixed-strings "\EFI\Linux\arch-$KERNELS.efi" > /dev/null 2>&1); then
+					if [ -f "$MP_ESP/EFI/Linux/arch-$KERNELS.efi" ]; then
 						ESP_DISK="$(partition_disk "$ESP")"
 						ESP_NUMBER="$(partition_number "$ESP")"
-						efibootmgr --create --disk "$ESP_DISK" --part "$ESP_NUMBER" --loader "\EFI\Linux\archlinux.efi" --label "Arch Linux (linux)" --quiet 2>&1
+						efibootmgr --create --disk "$ESP_DISK" --part "$ESP_NUMBER" --loader "\EFI\Linux\arch-$KERNELS.efi" --label "Arch Linux ($KERNELS)" --quiet 2>&1
 					else
-						echo "EFI executable not found in path '$MP_ESP/EFI/Linux/archlinux.efi'! System won't boot"
+						echo "EFI executable not found in path '$MP_ESP/EFI/Linux/arch-$KERNELS.efi'! System won't boot"
 					fi
 				fi
 				efibootmgr --verbose 2>&1
@@ -2318,6 +2177,8 @@ start_install () {
 				echo "syslinux setup"
 				syslinux-install_update -i -a -m -c "$MNT" 2>&1
 				sed --in-place "s|APPEND.*|APPEND $CMDLINE|g" "$MNT/boot/syslinux/syslinux.cfg" 2>&1
+				sed --in-place "s|LINUX.*|LINUX ../vmlinuz-$KERNELS|g" "$MNT/boot/syslinux/syslinux.cfg" 2>&1
+				sed --in-place "s|INITRD.*|INITRD ../initramfs-$KERNELS.img|g" "$MNT/boot/syslinux/syslinux.cfg" 2>&1
 				if [ -n "$MC_PATH" ]; then
 					sed --in-place "s|INITRD ..|INITRD ../$MC_PATH,..|g" "$MNT/boot/syslinux/syslinux.cfg" 2>&1
 				fi
