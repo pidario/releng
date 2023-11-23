@@ -1998,7 +1998,9 @@ start_install () {
 			{
 				echo "# mkinitcpio preset file for the '%PKGBASE%' package"
 				echo "ALL_kver=\"/boot/vmlinuz-%PKGBASE%\""
-				echo "ALL_microcode=(/boot/*-ucode.img)"
+				if [ "$VIRTUALIZATION" != none ]; then
+					echo "ALL_microcode=(/boot/*-ucode.img)"
+				fi
 				echo "PRESETS=('default')"
 				if [ "$MODE" = UEFI ]; then
 					mkdir --parents "$MP_ESP/EFI/Linux"
