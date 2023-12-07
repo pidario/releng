@@ -2,6 +2,7 @@ bandwhich
 bind
 chezmoi
 curl
+dos2unix
 dosfstools
 dust
 e2fsprogs
