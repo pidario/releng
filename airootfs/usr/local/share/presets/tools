@@ -36,6 +36,7 @@ pacutils
 parted
 proxychains-ng
 rclone
+renameutils
 ripgrep
 rsync
 sbsigntools
