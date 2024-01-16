@@ -19,7 +19,10 @@ mkdir --parents $NODB
 cat $PRESETS_DIR/base $PRESETS_DIR/tools $PRESETS_DIR/dev $PRESETS_DIR/vm $PRESETS_DIR/misc > "$ALL_PACKS"
 
 # aur dependencies
-pacman --query --info - 2> /dev/null < $PRESETS_DIR/aur | grep "Depends On" | cut --delimiter=: --fields=2 | xargs --max-args=1 | grep --invert-match --regexp "None" | grep --invert-match --regexp "oracle" | sort | uniq >> "$ALL_PACKS"
+pacman --query --info - 2> /dev/null < $PRESETS_DIR/aur \
+	| grep --extended-regexp "Depends On\s+:\s+.+" \
+	| xargs --max-args=1 | sort | uniq \
+	| grep --invert-match --extended-regexp "^Depends$|^On$|^None$|oracle|^:$" >> "$ALL_PACKS"
 
 # this is useful to detect dependencies
 #while IFS= read -r p; do
