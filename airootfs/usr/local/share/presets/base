@@ -53,6 +53,7 @@ wireless-regdb
 xarchiver
 xcb-util-errors
 xclip
+xdg-desktop-portal-gtk
 xdg-user-dirs
 xdg-utils
 xorg-drivers
