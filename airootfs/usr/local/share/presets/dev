@@ -15,12 +15,13 @@ github-cli
 go
 go-tools
 gopls
+intellij-idea-community-edition
+jdk11-openjdk
 luarocks
 lua-language-server
 ksh
 make
 meld
-netbeans
 ninja
 patch
 pkgconf
