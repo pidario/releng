@@ -17,6 +17,7 @@ go-tools
 gopls
 intellij-idea-community-edition
 jdk11-openjdk
+jre17-openjdk
 luarocks
 lua-language-server
 ksh
