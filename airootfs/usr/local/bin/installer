@@ -31,7 +31,7 @@ NTFS_EXFAT_HEX=0x7
 LUKS_HEX=0xe8
 LVM_HEX=0x8e
 
-BASE_HOOKS="base udev autodetect modconf kms keyboard keymap block"
+BASE_HOOKS="base udev autodetect microcode modconf kms keyboard keymap block"
 FS_HOOKS="filesystems fsck"
 HOOKS="$BASE_HOOKS $FS_HOOKS"
 HOOKS_LVM="$BASE_HOOKS lvm2 $FS_HOOKS"
@@ -1998,9 +1998,6 @@ start_install () {
 			{
 				echo "# mkinitcpio preset file for the '%PKGBASE%' package"
 				echo "ALL_kver=\"/boot/vmlinuz-%PKGBASE%\""
-				if [ "$VIRTUALIZATION" != none ]; then
-					echo "ALL_microcode=(/boot/*-ucode.img)"
-				fi
 				echo "PRESETS=('default')"
 				if [ "$MODE" = UEFI ]; then
 					mkdir --parents "$MP_ESP/EFI/Linux"
