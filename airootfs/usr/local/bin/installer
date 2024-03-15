@@ -31,14 +31,6 @@ NTFS_EXFAT_HEX=0x7
 LUKS_HEX=0xe8
 LVM_HEX=0x8e
 
-BASE_HOOKS="base udev autodetect microcode modconf kms keyboard keymap block"
-FS_HOOKS="filesystems fsck"
-HOOKS="$BASE_HOOKS $FS_HOOKS"
-HOOKS_LVM="$BASE_HOOKS lvm2 $FS_HOOKS"
-HOOKS_LUKS="$BASE_HOOKS encrypt $FS_HOOKS"
-HOOKS_LVM_LUKS="$BASE_HOOKS encrypt lvm2 $FS_HOOKS"
-HOOKS_LUKS_LVM="$BASE_HOOKS lvm2 encrypt $FS_HOOKS"
-
 MNT=/mnt
 PRESETS_DIR=/usr/local/share/presets
 REPO_DIR=/usr/local/share/repo
@@ -62,6 +54,21 @@ DIALOG="$DIALOG --erase-on-exit --cr-wrap --no-shadow --cursor-off-label --no-mo
 SIZE=$(stty size)
 ROWS=$((${SIZE% *} - 4))
 COLS=$((${SIZE#* } - 4))
+VIRTUALIZATION=$(systemd-detect-virt --vm 2> /dev/null)
+
+BASE_LEFT_HOOKS="base udev autodetect"
+BASE_RIGHT_HOOKS="modconf kms keyboard keymap block"
+if [ "$VIRTUALIZATION" != none ]; then
+	BASE_HOOKS="$BASE_LEFT_HOOKS $BASE_RIGHT_HOOKS"
+else
+	BASE_HOOKS="$BASE_LEFT_HOOKS microcode $BASE_RIGHT_HOOKS"
+fi
+FS_HOOKS="filesystems fsck"
+HOOKS="$BASE_HOOKS $FS_HOOKS"
+HOOKS_LVM="$BASE_HOOKS lvm2 $FS_HOOKS"
+HOOKS_LUKS="$BASE_HOOKS encrypt $FS_HOOKS"
+HOOKS_LVM_LUKS="$BASE_HOOKS encrypt lvm2 $FS_HOOKS"
+HOOKS_LUKS_LVM="$BASE_HOOKS lvm2 encrypt $FS_HOOKS"
 
 # TODO: let user choose one or more kernel(s); it would be nice, in case of multiple kernels, to ask if user would like to use systemd-boot (if UEFI)
 # TODO: secure boot using sbctl
@@ -1867,7 +1874,6 @@ start_install () {
 		msg "Password for root user not set"
 		users_menu
 	fi
-	VIRTUALIZATION=$(systemd-detect-virt --vm 2> /dev/null)
 	if [ "$VIRTUALIZATION" != none ]; then
 		if ! (is_selected xf86-video-vmware); then
 			PACKS="$PACKS xf86-video-vmware"
