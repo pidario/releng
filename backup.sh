@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -eu
 
@@ -7,52 +7,45 @@ if [ "$(id --user)" -ne 0 ]; then
 	exit 1
 fi
 
-NODB=/tmp/nodb
-PRESETS_DIR=./airootfs/usr/local/share/presets
-CACHE_DIR=./airootfs/usr/local/share/repo/pkg
-AUR_DIR=./airootfs/usr/local/share/repo/aur
-ALL_PACKS=packs-list
+PARENT="$(pwd)"
+DB_DIR="${PARENT}/db"
+PRESETS_DIR="${PARENT}/airootfs/usr/local/share/presets"
+CACHE_DIR="${PARENT}/airootfs/usr/local/share/repo/pkg"
+AUR_DIR="${PARENT}/aur"
+LOG_FILE="${PARENT}/pacman"
+MAIN_PACKS="${PARENT}/packs-list"
 
-rm --force --recursive backup.tar "$NODB"
-mkdir --parents $NODB
+rm --verbose --force backup.tar
+mkdir --parents --verbose "$DB_DIR"
+mv --verbose "${LOG_FILE}.log" "${LOG_FILE}_$(date +%Y-%m-%dT%H%M%S).log" 2> /dev/null || :
 
-cat $PRESETS_DIR/base $PRESETS_DIR/tools $PRESETS_DIR/dev $PRESETS_DIR/vm $PRESETS_DIR/misc > "$ALL_PACKS"
+# all presets except aur
+cat "${PRESETS_DIR}/base" "${PRESETS_DIR}/tools" "${PRESETS_DIR}/dev" "${PRESETS_DIR}/vm" "${PRESETS_DIR}/misc" > "$MAIN_PACKS"
 
 # aur dependencies
-pacman --query --info - 2> /dev/null < $PRESETS_DIR/aur \
+pacman --query --info - 2> /dev/null < "${PRESETS_DIR}/aur" \
 	| grep --extended-regexp "Depends On\s+:\s+.+" \
 	| xargs --max-args=1 | sort | uniq \
-	| grep --invert-match --extended-regexp "^Depends$|^On$|^None$|oracle|^:$" >> "$ALL_PACKS"
+	| grep --invert-match --extended-regexp "^Depends$|^On$|^None$|oracle|^:$" >> "$MAIN_PACKS"
 
-# this is useful to detect dependencies
-#while IFS= read -r p; do
-#	echo "$p" >> "test_deps"
-#	pacman --sync --logfile /dev/null --noconfirm --dbpath $NODB --print "$p" >> "test_deps"
-#done < "$ALL_PACKS"
-#rm "$ALL_PACKS"
-#exit 0
+# first, clean AUR_DIR, since it is manually managed (package pacman-contrib is needed)
+paccache --cachedir "$AUR_DIR" --remove --keep 1
 
-pacman --sync --refresh --downloadonly --logfile /dev/null --dbpath $NODB --cachedir $CACHE_DIR - < "$ALL_PACKS"
-rm "$ALL_PACKS"
+# download and "install" packages; saves them in CACHE_DIR and creates/updates DB_DIR
+pacman --sync --refresh --sysupgrade --needed --dbonly --logfile "${LOG_FILE}.log" --dbpath "$DB_DIR" --cachedir "$CACHE_DIR" - < "$MAIN_PACKS"
+# install aur packages found in AUR_DIR and then move them to CACHE_DIR
+# to add new aur package, just copy it to AUR_DIR; the next time this script is run it will be handled
+if [ -n "$(find "$AUR_DIR" -mindepth 1 -maxdepth 1 2> /dev/null)" ]; then
+	pacman --upgrade "${AUR_DIR}"/*.tar.zst --needed --dbonly --logfile "${LOG_FILE}.log" --dbpath "$DB_DIR"
+	mv --verbose "${AUR_DIR}"/*.tar.zst "${CACHE_DIR}/"
+fi
 
-# keep only latest version of each package in cache (package pacman-contrib)
-paccache --cachedir $CACHE_DIR --cachedir $AUR_DIR --remove --keep 1
+rm --verbose --force "$MAIN_PACKS"
 
-TODAY="$(date +%Y-%m-%d)"
-# add latest file to custom sync databases:
-repo-add --quiet $CACHE_DIR/pkg.db.tar.gz $(find $CACHE_DIR/*.pkg.tar.* -type f -not -path "*.sig" -newerct "$TODAY" -print0 | xargs --null)
-#repo-add --quiet $AUR_DIR/aur.db.tar.gz $(find $AUR_DIR/*.pkg.tar.* -type f -not -path "*.sig" -newerct "$TODAY" -print0 | xargs --null)
+# keep only packages present in DB_DIR
+pacman --sync --clean --verbose --cachedir "$CACHE_DIR" --dbpath "$DB_DIR" --noconfirm
 
-# to instead add every package (takes a long time):
-#repo-add --quiet "$CACHE_DIR"/pkg.db.tar.gz $(find $CACHE_DIR/*.pkg.tar.* -type f -not -path "*.sig" -print0 | xargs --null)
-repo-add --quiet "$AUR_DIR"/aur.db.tar.gz $(find $AUR_DIR/*.pkg.tar.* -type f -not -path "*.sig" -print0 | xargs --null)
+repo-add --quiet --new --remove "${CACHE_DIR}/pkg.db.tar.gz" $(find $CACHE_DIR/*.pkg.tar.* -type f -not -path "*.sig" -print0 | xargs --null)
 
 # back everything up
 tar --create --verbose --file backup.tar .
-
-# to skip packages:
-# tar --exclude airootfs/usr/local/share/repo --create --verbose --file backup-mini.tar .
-
-## to remove PACKAGE from the custom database:
-# repo-remove "$CACHE_DIR"/pkg.db.tar.gz "$PACKAGE"
-# rm "$CACHE_DIR"/$PACKAGE*
