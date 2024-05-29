@@ -1,4 +1,4 @@
 airootfs/usr/local/share/repo/pkg
-aur
-db
+aur/
+db/
 *.log
