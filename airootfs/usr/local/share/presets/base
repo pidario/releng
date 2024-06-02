@@ -17,6 +17,7 @@ intel-ucode
 iwd
 kvantum
 kvantum-qt5
+less
 linux-lts
 linux-firmware
 lvm2
