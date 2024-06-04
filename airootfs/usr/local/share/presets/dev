@@ -34,4 +34,5 @@ python-lsp-server
 rustup
 skopeo
 tokei
+tree-sitter-cli
 which
