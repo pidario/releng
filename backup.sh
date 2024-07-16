@@ -14,6 +14,7 @@ CACHE_DIR="${PARENT}/airootfs/usr/local/share/repo/pkg"
 AUR_DIR="${PARENT}/aur"
 LOG_FILE="${PARENT}/pacman"
 MAIN_PACKS="${PARENT}/packs-list"
+OUTPUT=releng.tar
 
 mkdir --parents --verbose "$DB_DIR"
 mv --verbose "${LOG_FILE}.log" "${LOG_FILE}_$(date +%Y-%m-%dT%H%M%S).log" 2> /dev/null || :
@@ -39,7 +40,7 @@ if [ -n "$(find "$AUR_DIR" -mindepth 1 -maxdepth 1 2> /dev/null)" ]; then
 	mv --verbose "${AUR_DIR}"/*.tar.zst "${CACHE_DIR}/"
 fi
 
-rm --verbose --force backup.tar "$MAIN_PACKS" "$CACHE_DIR"/pkg.db* "$CACHE_DIR"/pkg.files*
+rm --verbose --force "$OUTPUT" "$MAIN_PACKS" "$CACHE_DIR"/pkg.db* "$CACHE_DIR"/pkg.files*
 
 # keep only packages present in DB_DIR
 pacman --sync --clean --verbose --logfile "${LOG_FILE}.log" --cachedir "$CACHE_DIR" --dbpath "$DB_DIR" --noconfirm
@@ -47,4 +48,4 @@ pacman --sync --clean --verbose --logfile "${LOG_FILE}.log" --cachedir "$CACHE_D
 repo-add --quiet "${CACHE_DIR}/pkg.db.tar.gz" $(find $CACHE_DIR/*.pkg.tar.* -type f -not -path "*.sig" -print0 | xargs --null)
 
 # back everything up
-tar --create --verbose --file backup.tar --exclude "*.log" .
+tar --create --verbose --file "$OUTPUT" --exclude "*.log" .
