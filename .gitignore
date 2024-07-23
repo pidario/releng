@@ -1,4 +1,6 @@
 airootfs/usr/local/share/repo/pkg
 aur/
 db/
+out/
+work/
 *.log

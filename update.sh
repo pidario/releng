@@ -46,6 +46,3 @@ rm --verbose --force "$OUTPUT" "$MAIN_PACKS" "$CACHE_DIR"/pkg.db* "$CACHE_DIR"/p
 pacman --sync --clean --verbose --logfile "${LOG_FILE}.log" --cachedir "$CACHE_DIR" --dbpath "$DB_DIR" --noconfirm
 
 repo-add --quiet "${CACHE_DIR}/pkg.db.tar.gz" $(find $CACHE_DIR/*.pkg.tar.* -type f -not -path "*.sig" -print0 | xargs --null)
-
-# back everything up
-tar --create --verbose --file "$OUTPUT" --exclude "*.log" .
