@@ -26,7 +26,6 @@ telegram-desktop
 texstudio
 xca
 xournalpp
-xreader
 yt-dlp
 wireshark-qt
 ############################## XFCE #############################
@@ -46,25 +45,17 @@ xfce4-screensaver
 xfce4-session
 xfce4-settings
 xfwm4
-xreader
 ############################## AUR ##############################
 clipboard-git
 console-tdm
-coredns-bin
 cutechess-git
 czkawka-gui-bin
 davmail
-mongodb-tools-bin
 redshift-minimal
 rofi-bluetooth-git
 szyszka-bin
-waydroid
-waydroid-image
 ############################## FLATPAK ##############################
 com.github.KRTirtho.Spotube
-com.jetbrains.IntelliJ-IDEA-Community
 com.usebottles.bottles
 com.valvesoftware.Steam
-io.dbeaver.DBeaverCommunity
-com.mongodb.Compass
 org.prismlauncher.PrismLauncher
