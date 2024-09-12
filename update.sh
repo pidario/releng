@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 set -eu
 
@@ -14,10 +14,8 @@ CACHE_DIR="${PARENT}/airootfs/usr/local/share/repo/pkg"
 AUR_DIR="${PARENT}/aur"
 LOG_FILE="${PARENT}/pacman"
 MAIN_PACKS="${PARENT}/packs-list"
-OUTPUT=releng.tar
 
 mkdir --parents --verbose "$DB_DIR"
-mv --verbose "${LOG_FILE}.log" "${LOG_FILE}_$(date +%Y-%m-%dT%H%M%S).log" 2> /dev/null || :
 
 # all presets except aur
 cat "${PRESETS_DIR}/base" "${PRESETS_DIR}/tools" "${PRESETS_DIR}/dev" "${PRESETS_DIR}/vm" "${PRESETS_DIR}/misc" > "$MAIN_PACKS"
@@ -40,9 +38,11 @@ if [ -n "$(find "$AUR_DIR" -mindepth 1 -maxdepth 1 2> /dev/null)" ]; then
 	mv --verbose "${AUR_DIR}"/*.tar.zst "${CACHE_DIR}/"
 fi
 
-rm --verbose --force "$OUTPUT" "$MAIN_PACKS" "$CACHE_DIR"/pkg.db* "$CACHE_DIR"/pkg.files*
+rm --verbose --force "$MAIN_PACKS" "$CACHE_DIR"/pkg.db* "$CACHE_DIR"/pkg.files*
 
 # keep only packages present in DB_DIR
 pacman --sync --clean --verbose --logfile "${LOG_FILE}.log" --cachedir "$CACHE_DIR" --dbpath "$DB_DIR" --noconfirm
 
 repo-add --quiet "${CACHE_DIR}/pkg.db.tar.gz" $(find $CACHE_DIR/*.pkg.tar.* -type f -not -path "*.sig" -print0 | xargs --null)
+
+mv --verbose "${LOG_FILE}.log" "${LOG_FILE}_$(date +%Y-%m-%dT%H%M%S).log" 2> /dev/null
