@@ -13,6 +13,7 @@ efibootmgr
 efitools
 exfatprogs
 fd
+freerdp
 git
 gnu-efi
 gtk-vnc
@@ -37,6 +38,7 @@ pacman-contrib
 pacutils
 parted
 proxychains-ng
+remmina
 rclone
 renameutils
 ripgrep
