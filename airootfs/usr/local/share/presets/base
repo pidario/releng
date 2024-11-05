@@ -3,7 +3,6 @@ arc-gtk-theme
 base
 bash-completion
 chromium
-cups
 dialog
 featherpad
 feh
@@ -11,7 +10,6 @@ firefox
 gpm
 gtk2
 gtkmm3
-hplip
 htop
 imwheel
 intel-ucode
@@ -38,11 +36,8 @@ physlock
 polkit-gnome
 pipewire-pulse
 qalculate-gtk
-ristretto
 rofi
-simple-scan
 syslinux
-system-config-printer
 systemd-resolvconf
 thunar
 ttf-nerd-fonts-symbols-mono
@@ -59,6 +54,8 @@ xdg-utils
 xorg-drivers
 xorg-server
 xorg-xinit
+zathura
+zathura-pdf-mupdf
 zip
 zsh
 zsh-completions

@@ -27,12 +27,11 @@ patch
 pkgconf
 podman
 python
-python-pip
-python-pipx
 python-pylint
 python-lsp-server
 rustup
 skopeo
 tokei
 tree-sitter-cli
+uv
 which
