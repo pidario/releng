@@ -5,7 +5,6 @@ chezmoi
 curl
 dbeaver
 dos2unix
-dosfstools
 dust
 e2fsprogs
 edk2-shell
@@ -14,9 +13,11 @@ efitools
 exfatprogs
 fd
 freerdp
+fuse2
 git
 gnu-efi
 gtk-vnc
+gvfs-mtp
 imagemagick
 inetutils
 jq
