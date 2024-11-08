@@ -49,7 +49,6 @@ xcb-util-errors
 xclip
 xdg-user-dirs
 xdg-utils
-xorg-drivers
 xorg-server
 xorg-xinit
 zathura
