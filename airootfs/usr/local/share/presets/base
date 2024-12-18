@@ -6,12 +6,12 @@ dialog
 featherpad
 feh
 firefox
+gcr
 gpm
 gtk2
 gtkmm3
 htop
 imwheel
-iwd
 kvantum
 kvantum-qt5
 less
@@ -20,6 +20,9 @@ linux-firmware
 lvm2
 mandoc
 neovim
+networkmanager
+networkmanager-openconnect
+network-manager-applet
 numlockx
 noto-fonts
 noto-fonts-cjk
@@ -42,6 +45,7 @@ ttf-nerd-fonts-symbols-mono
 tmux
 unrar
 unzip
+webkit2gtk-4.1
 wireplumber
 wireless-regdb
 xarchiver

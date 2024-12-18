@@ -128,10 +128,6 @@ editbox () {
 	$DIALOG --cancel-label "Back" --title "${2-}" --editbox "$1" 0 0 3>&1 1>&2 2>&3
 }
 
-interface_form () {
-	$DIALOG --title "IP configuration for $INT_NAME interface" --form "Each setting can have multiple values (space separated).\nIP field entries should be in CIDR notation\ne.g.: 192.168.1.1/24" 0 0 0 "IP" 0 0 "$(trim "$PREV_IP")" 0 9 61 60 "Gateway" 3 0 "$(trim "$PREV_GT")" 3 9 61 60 "DNS" 5 0 "$(trim "$PREV_DNS")" 5 9 61 60 3>&1 1>&2 2>&3
-}
-
 disks () {
 	lsblk --nodeps --noheadings --list --output PATH,TYPE | grep disk | awk '{print $1}' 2> /dev/null
 }
@@ -339,14 +335,6 @@ interface_status () {
 	networkctl status "$1" --no-pager --no-legend --lines 0 | tail --lines +2
 }
 
-wlan_present () {
-	networkctl --no-pager --no-legend | grep wlan > /dev/null 2>&1
-}
-
-wlan_config_present () {
-	ls /var/lib/iwd > /dev/null 2>&1
-}
-
 check_link () {
 	for IFACE in $(network_interfaces); do
 		STATE=$(networkctl list --no-pager --no-legend "$IFACE" | awk '{print $4}')
@@ -440,9 +428,8 @@ advanced () {
 }
 
 settings () {
-	SELECTED_SETTING="${1-network}"
+	SELECTED_SETTING="${1-key}"
 	SETTINGS_MENU="toggle \"Toggle installation method (online or offline)\"
-		network \"Configure network interfaces\"
 		wifi \"Connect to Wi-Fi\"
 		key \"Set keymap\"
 		loc \"Set system locale(s) and language\"
@@ -459,8 +446,6 @@ settings () {
 			settings toggle;;
 		wifi)
 			wifi;;
-		network)
-			network;;
 		key)
 			key;;
 		loc)
@@ -660,130 +645,6 @@ wifi () {
 		msg "iwctl command not found"
 	fi
 	settings key
-}
-
-network () {
-	INTERFACES=
-	for i in $(network_interfaces); do
-		INTERFACES="$INTERFACES $i $i"
-	done
-	if [ -z "$INTERFACES" ]; then
-		msg "No network interface found"
-		settings network
-	fi
-	SELECTED_INTERFACE="${1-}"
-	INT=$(echo "$INTERFACES" | dlg --no-tags --cancel-label "Back" --title "Network Interfaces" --default-item "$SELECTED_INTERFACE" --menu "$(title)")
-	exitstatus=$?
-	if [ $exitstatus -ne 0 ]; then
-		settings network
-	fi
-	if [ -n "$INT" ]; then
-		interface_options "$INT"
-	fi
-	network
-}
-
-static () {
-	PREV_IP=
-	PREV_GT=
-	PREV_DNS=
-	INT_NAME="$1"
-	if [ -f "/tmp/$INT_NAME.network" ]; then
-		while IFS= read -r row; do
-			R=$(trim "$row")
-			FIRST="${R%"${R#?}"}"
-			if [ -n "$R" ] && [ "$FIRST" != "#" ]; then
-				if (beginswith "Address=" "$R"); then
-					IP_ROW="${R#Address=}"
-					for IP in $IP_ROW; do
-						PREV_IP="$PREV_IP $(trim "$IP")"
-					done
-				elif (beginswith "Gateway=" "$R"); then
-					GT_ROW="${R#Gateway=}"
-					for GT in $GT_ROW; do
-						PREV_GT="$PREV_GT $(trim "$GT")"
-					done
-				elif (beginswith "DNS=" "$R"); then
-					DNS_ROW="${R#DNS=}"
-					for DNS in $DNS_ROW; do
-						PREV_DNS="$PREV_DNS $(trim "$DNS")"
-					done
-				fi
-			fi
-		done < "/tmp/$INT_NAME.network"
-	fi
-	FORM="$(interface_form)"
-	exitstatus=$?
-	if [ $exitstatus -ne 0 ]; then
-		interface_options "$INT_NAME" static
-	fi
-	IP=${FORM%%
-*}
-	FORM=${FORM#"$IP"
-}
-	GT=${FORM%%
-*}
-	FORM=${FORM#"$GT"
-}
-	DNS=${FORM%%
-*}
-	if [ -z "$IP" ] || [ -z "$GT" ] || [ -z "$DNS" ]; then
-		msg "All fields are mandatory"
-		interface_options "$INT_NAME" static
-	fi
-	UNIT_FILE=$(printf "[Match]\nName=%s\n\n[Network]" "$INT_NAME")
-	for I in $IP; do
-		UNIT_FILE="$UNIT_FILE$(printf "\nAddress=%s" "$(trim "$I")")"
-	done
-	for G in $GT; do
-		UNIT_FILE="$UNIT_FILE$(printf "\nGateway=%s" "$(trim "$G")")"
-	done
-	for D in $DNS; do
-		UNIT_FILE="$UNIT_FILE$(printf "\nDNS=%s" "$(trim "$D")")"
-	done
-	{
-		echo "The following unit file will be written:"
-		echo "$UNIT_FILE"
-		echo "$UNIT_FILE" | tee "/etc/systemd/network/$INT_NAME.network" > "/tmp/$INT_NAME.network" 2>&1
-		networkctl reload 2>&1 && echo "Static IP configuration for interface $INT_NAME applied"
-	} | pb
-	interface_options "$INT_NAME" static
-}
-
-interface_options () {
-	SELECTED="${2-up}"
-	STATUS=$(interface_status "$1")
-	INTERFACE_OPTIONS_MENU="up \"Enable interface\"
-		down \"Disable interface\"
-		static \"Static IP\"
-		dhcp DHCP"
-	CHOICE=$(echo "$INTERFACE_OPTIONS_MENU" | dlg --no-tags --cancel-label "Back" --title "Options for interface $1" --default-item "$SELECTED" --menu "$STATUS")
-	exitstatus=$?
-	if [ $exitstatus -ne 0 ]; then
-		network "$1"
-	fi
-	case $CHOICE in
-		up)
-			networkctl up "$1" 2>&1 && \
-			echo "Interface $1 enabled" | pb
-			interface_options "$1" up;;
-		down)
-			networkctl down "$1" 2>&1 && \
-			echo "Interface $1 disabled" | pb
-			interface_options "$1" down;;
-		static)
-			static "$1";;
-		dhcp)
-			if (confirm "Use DHCP to obtain address for interface $1?"); then
-				{
-					printf "[Match]\nName=%s\n\n[Network]\nDHCP=yes" "$1" | tee "/etc/systemd/network/$1.network" > "/tmp/$1.network"  2>&1
-					networkctl reload 2>&1 && echo "$1 will use DHCP to obtain an IP address"
-				} | pb
-			fi
-			interface_options "$1" dhcp;;
-		*)
-			interface_options;;
-	esac
 }
 
 lvm_menu () {
@@ -1889,11 +1750,6 @@ start_install () {
 					PACKS="$PACKS open-vm-tools"
 				fi
 				;;
-			oracle)
-				if ! (is_selected virtualbox-guest-utils); then
-					PACKS="$PACKS virtualbox-guest-utils"
-				fi
-				;;
 			*)
 				msg "Virtualization technology '$VIRTUALIZATION' not supported yet. System might not function smoothly";;
 		esac
@@ -1928,15 +1784,8 @@ start_install () {
 	if (doas_needed) && ! (is_selected opendoas); then
 		PACKS="$PACKS opendoas"
 	fi
-	if (wlan_present); then
-		if ! (wlan_config_present); then
-			if ! (confirm "WLAN is not configured. Continue anyway?"); then
-				settings wifi
-			fi
-		fi
-		if ! (is_selected iwd); then
-			PACKS="$PACKS iwd"
-		fi
+	if ! (is_selected networkmanager); then
+		PACKS="$PACKS networkmanager"
 	fi
 	if [ "$MODE" = UEFI ]; then
 		if ! (is_selected efibootmgr); then
@@ -2077,18 +1926,12 @@ start_install () {
 			if (is_installed opendoas); then
 				echo "enabling wheel group"
 				printf "permit persist :wheel\n" > "$MNT/etc/doas.conf" 2>&1
+				printf "permit keepenv nopass :wheel\n" > "$MNT/etc/doas.conf" 2>&1
 				chown --verbose root:root "$MNT/etc/doas.conf" 2>&1
 				chmod --verbose 0600 "$MNT/etc/doas.conf" 2>&1
-				arch-chroot "$MNT" ln --symbolic --force --verbose "/usr/bin/doas" "/usr/local/bin/sudo" 2>&1
 			fi
-			if (wlan_present); then
-				echo "enabling iwd"
-				arch-chroot "$MNT" systemctl enable iwd 2>&1
-				echo "copying wifi configuration"
-				cp --archive --recursive --verbose /var/lib/iwd "$MNT/var/lib/iwd" 2>&1
-			fi
-			echo "enabling systemd networkd"
-			arch-chroot "$MNT" systemctl enable systemd-networkd 2>&1
+			echo "enabling NetworkManager"
+			arch-chroot "$MNT" systemctl enable NetworkManager 2>&1
 			echo "enabling systemd resolved"
 			arch-chroot "$MNT" systemctl enable systemd-resolved 2>&1
 			ln --symbolic --force --verbose /run/systemd/resolve/stub-resolv.conf "$MNT/etc/resolv.conf" 2>&1
@@ -2096,15 +1939,9 @@ start_install () {
 				echo "enabling systemd timesyncd"
 				arch-chroot "$MNT" systemctl enable systemd-timesyncd 2>&1
 			fi
-			echo "copying network unit files"
-			cp --verbose /tmp/*.network "$MNT/etc/systemd/network/" 2>&1
 			if [ -f "$MNT/usr/lib/systemd/system/fstrim.service" ] && [ -f "$MNT/usr/lib/systemd/system/fstrim.timer" ]; then
 				echo "enabling TRIM timer"
 				arch-chroot "$MNT" systemctl enable fstrim.timer 2>&1
-			fi
-			if [ -f "$MNT/usr/lib/systemd/system/reflector.service" ] && [ -f "$MNT/usr/lib/systemd/system/reflector.timer" ]; then
-				echo "enabling reflector timer"
-				arch-chroot "$MNT" systemctl enable reflector.timer 2>&1
 			fi
 			if [ -f "$MNT/usr/lib/systemd/system/paccache.service" ] && [ -f "$MNT/usr/lib/systemd/system/paccache.timer" ]; then
 				echo "enabling paccache timer"
@@ -2124,10 +1961,6 @@ start_install () {
 			if [ -f "$MNT/usr/lib/systemd/system/vmware-vmblock-fuse.service" ]; then
 				echo "enabling wmware vmblock fuse"
 				arch-chroot "$MNT" systemctl enable vmware-vmblock-fuse 2>&1
-			fi
-			if [ -f "$MNT/usr/lib/systemd/system/vboxservice.service" ]; then
-				echo "enabling virtualbox guest service"
-				arch-chroot "$MNT" systemctl enable vboxservice 2>&1
 			fi
 			if [ "$VIRTUALIZATION" != none ]; then
 				echo "disabling microcode updates"
