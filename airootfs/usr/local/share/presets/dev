@@ -17,8 +17,6 @@ go
 go-tools
 gopls
 intellij-idea-community-edition
-jdk11-openjdk
-jdk21-openjdk
 lua-language-server
 ksh
 make
