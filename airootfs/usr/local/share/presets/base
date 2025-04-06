@@ -1,4 +1,4 @@
-arc-gtk-theme
+adapta-gtk-theme
 base
 bash-completion
 chromium
@@ -33,7 +33,6 @@ openssh
 pamixer
 papirus-icon-theme
 pavucontrol
-physlock
 polkit-gnome
 pipewire-pulse
 qalculate-gtk

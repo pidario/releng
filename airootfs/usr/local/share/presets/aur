@@ -3,6 +3,7 @@ clipse-bin
 cyrus-sasl-xoauth2-git
 oama-bin
 oracle-instantclient-full
+physlock
 shellcheck-bin
 termite
 yay-bin
