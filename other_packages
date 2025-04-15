@@ -26,7 +26,6 @@ newsboat
 newsflash
 ntfs-3g
 nvtop
-poedit
 postgresql-libs
 python-adblock
 qmk
@@ -41,7 +40,6 @@ syncthing
 system-config-printer
 telegram-desktop
 texstudio
-transmission-remote-gtk
 xorg-drivers
 xournalpp
 yt-dlp
