@@ -36,6 +36,7 @@ pavucontrol
 polkit-gnome
 pipewire-pulse
 qalculate-qt
+qt6-5compat
 rofi
 syslinux
 systemd-resolvconf
