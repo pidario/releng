@@ -2,13 +2,13 @@
 
 pkgname=backgrounds
 pkgver=1.0.1
-pkgrel=1
+pkgrel=2
 pkgdesc='A collection of wallpapers'
 arch=('any')
 url="http://127.0.0.1"
 license=('GPL')
 source=('backgrounds.tar')
-sha256sums=('495da50c41006c573e504af1aca8041de1a66ab00fd3b7dbbfe3196df8292c40')
+sha256sums=('cdc1fdc2093e72354ef9cf5145c46557b676e43f1e97d3c1498d34d32c0a46ff')
 
 package () {
   backgrounds=$pkgdir/usr/share/backgrounds
