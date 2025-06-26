@@ -1,14 +1,14 @@
 # Maintainer: Dario Piombo <piombo.dario at gmail dot com>
 
 pkgname=backgrounds
-pkgver=1.0.1
-pkgrel=2
+pkgver=1.0.2
+pkgrel=1
 pkgdesc='A collection of wallpapers'
 arch=('any')
 url="http://127.0.0.1"
 license=('GPL')
 source=('backgrounds.tar')
-sha256sums=('cdc1fdc2093e72354ef9cf5145c46557b676e43f1e97d3c1498d34d32c0a46ff')
+sha256sums=('b03f2737ab467247b7e3a206b5e526b0fb3c5385934b5bec676e8b3a77425326')
 
 package () {
   backgrounds=$pkgdir/usr/share/backgrounds
