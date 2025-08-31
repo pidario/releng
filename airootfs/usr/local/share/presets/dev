@@ -13,9 +13,6 @@ fakeroot
 fzf
 gcc
 git-delta
-go
-go-tools
-gopls
 intellij-idea-community-edition
 lua-language-server
 ksh
