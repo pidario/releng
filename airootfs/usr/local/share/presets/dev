@@ -5,7 +5,6 @@ buildah
 clang
 cmake
 dbus-glib
-delve
 docker
 docker-buildx
 docker-compose
@@ -13,7 +12,6 @@ fakeroot
 fzf
 gcc
 git-delta
-intellij-idea-community-edition
 lua-language-server
 ksh
 make

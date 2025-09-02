@@ -5,6 +5,7 @@ dialog
 featherpad
 feh
 firefox
+flatpak
 gcr
 gnome-themes-extra
 gpm
@@ -35,6 +36,7 @@ papirus-icon-theme
 pavucontrol
 polkit-gnome
 pipewire-pulse
+pv
 qalculate-qt
 qt6-5compat
 rofi
@@ -51,6 +53,7 @@ wireless-regdb
 xarchiver
 xcb-util-errors
 xclip
+xdg-desktop-portal-gtk
 xdg-user-dirs
 xdg-utils
 xorg-server
