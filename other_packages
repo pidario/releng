@@ -6,6 +6,7 @@ calibre
 cuetools
 cups
 dosfstools
+gammastep
 gimp
 gvfs
 gvfs-mtp
@@ -40,6 +41,7 @@ syncthing
 system-config-printer
 telegram-desktop
 texstudio
+xdg-desktop-portal-hyprland
 xorg-drivers
 xournalpp
 yt-dlp
@@ -70,7 +72,6 @@ czkawka-gui-bin
 davmail
 hplip-plugin
 redshift-minimal
-rofi-bluetooth-git
 szyszka-bin
 xf86-video-vmware
 ############################## FLATPAK ##############################

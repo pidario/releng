@@ -11,19 +11,15 @@ efibootmgr
 efitools
 exfatprogs
 fd
-freerdp
 fuse2
+gcr
 git
 gnu-efi
-gtk-vnc
 gvfs-mtp
-imagemagick
 inetutils
 jq
-keepassxc
 lshw
 lsof
-maim
 net-tools
 nfs-utils
 nmap
@@ -33,7 +29,6 @@ pacman-contrib
 pacutils
 parted
 proxychains-ng
-remmina
 rclone
 renameutils
 ripgrep
@@ -41,8 +36,5 @@ rsync
 sbsigntools
 traceroute
 usbutils
-xca
 xmlstarlet
-xorg-xprop
-xorg-xwininfo
 wireguard-tools

@@ -18,7 +18,7 @@ MAIN_PACKS="${PARENT}/packs-list"
 mkdir --parents --verbose "$DB_DIR"
 
 # all presets except aur
-cat "${PRESETS_DIR}/base" "${PRESETS_DIR}/tools" "${PRESETS_DIR}/dev" "${PRESETS_DIR}/vm" "${PRESETS_DIR}/misc" > "$MAIN_PACKS"
+cat "${PRESETS_DIR}/base" "${PRESETS_DIR}/tools" "${PRESETS_DIR}/dev" "${PRESETS_DIR}/vm" "${PRESETS_DIR}/misc" "${PRESETS_DIR}/desktop" > "$MAIN_PACKS"
 
 # aur dependencies (aur packages MUST be installed to local system for this to work)
 pacman --query --info - 2> /dev/null < "${PRESETS_DIR}/aur" \
