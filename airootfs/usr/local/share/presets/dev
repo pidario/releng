@@ -4,7 +4,6 @@ autopep8
 buildah
 clang
 cmake
-dbus-glib
 docker
 docker-buildx
 docker-compose
@@ -14,6 +13,7 @@ gcc
 git-delta
 lua-language-server
 ksh
+mariadb-clients
 make
 mise
 ninja
@@ -25,6 +25,7 @@ python-pylint
 python-lsp-server
 rustup
 skopeo
+strace
 tokei
 tree-sitter-cli
 uv
