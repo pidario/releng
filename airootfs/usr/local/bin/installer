@@ -4,8 +4,8 @@
 
 set -u
 
-DIALOG="$(command -v dialog 2> /dev/null)"
-TM="$(command -v tmux 2> /dev/null)"
+DIALOG="$(command -v dialog 2>/dev/null)"
+TM="$(command -v tmux 2>/dev/null)"
 
 if [ -z "$DIALOG" ]; then
 	echo "dialog binary not found"
@@ -42,7 +42,6 @@ TMP_CUSTOM_PACKS=/tmp/packs
 TMP_HOSTNAME=/tmp/hostname
 TMP_TZ=/tmp/tz
 TMP_KEYMAP=/tmp/keymap
-TMP_COMPOSE=/tmp/compose
 TMP_LANG=/tmp/lang
 TMP_LOCALEGEN=/tmp/locale.gen
 TMP_PRESET=/tmp/preset
@@ -54,7 +53,7 @@ DIALOG="$DIALOG --erase-on-exit --cr-wrap --no-shadow --cursor-off-label --no-mo
 SIZE=$(stty size)
 ROWS=$((${SIZE% *} - 4))
 COLS=$((${SIZE#* } - 4))
-VIRTUALIZATION=$(systemd-detect-virt --vm 2> /dev/null)
+VIRTUALIZATION=$(systemd-detect-virt --vm 2>/dev/null)
 
 BASE_LEFT_HOOKS="base udev autodetect"
 BASE_RIGHT_HOOKS="modconf kms keyboard keymap block"
@@ -74,131 +73,131 @@ HOOKS_LUKS_LVM="$BASE_HOOKS lvm2 encrypt $FS_HOOKS"
 # TODO: secure boot using sbctl
 # TODO: non-interactive script
 
-dt () {
+dt() {
 	date +'%Y-%m-%dT%H:%M:%S%:z'
 }
 
-log () {
-	printf "%s %s\n" "$(dt)" "$1" >> "$LOG"
+log() {
+	printf "%s %s\n" "$(dt)" "$1" >>"$LOG"
 }
 
-trim () {
+trim() {
 	str="$*"
 	str="${str#"${str%%[![:space:]]*}"}"
 	str="${str%"${str##*[![:space:]]}"}"
 	printf "%s" "$str"
 }
 
-is_valid () {
+is_valid() {
 	printf "%s" "$1" | grep --quiet --regexp "^[a-z][-a-z0-9]*$"
 }
 
-beginswith () { case $2 in $1*) true;; *) false;; esac }
+beginswith() { case $2 in $1*) true ;; *) false ;; esac }
 
-dlg () {
+dlg() {
 	xargs $DIALOG "$@" 0 0 0 3>&1 1>&2 2>&3
 }
 
-sdlg () {
+sdlg() {
 	xargs $DIALOG "$@" 0 0 3>&1 1>&2 2>&3
 }
 
-confirm () {
+confirm() {
 	$DIALOG --title "Confirm" --yesno "$1" 0 0
 }
 
-msg () {
+msg() {
 	log "$1"
 	$DIALOG --msgbox "$1" 0 0
 }
 
-tb () {
+tb() {
 	$DIALOG --textbox "$1" 0 0 3>&1 1>&2 2>&3
 }
 
-passwordbox () {
+passwordbox() {
 	$DIALOG --insecure --title "${2-}" --passwordbox "$1" 0 0 3>&1 1>&2 2>&3
 }
 
-pb () {
+pb() {
 	awk --assign date="$(dt)" '{print date, $0}' | tee --append "$LOG" | fold --spaces --width $((COLS - 3)) | $DIALOG --programbox $ROWS $COLS
 }
 
-editbox () {
+editbox() {
 	$DIALOG --cancel-label "Back" --title "${2-}" --editbox "$1" 0 0 3>&1 1>&2 2>&3
 }
 
-disks () {
-	lsblk --nodeps --noheadings --list --output PATH,TYPE | grep disk | awk '{print $1}' 2> /dev/null
+disks() {
+	lsblk --nodeps --noheadings --list --output PATH,TYPE | grep disk | awk '{print $1}' 2>/dev/null
 }
 
-disk_info () {
-	lsblk --nodeps --noheadings --list --output PATH,VENDOR,MODEL,PTTYPE,SIZE,STATE "$1" 2> /dev/null
+disk_info() {
+	lsblk --nodeps --noheadings --list --output PATH,VENDOR,MODEL,PTTYPE,SIZE,STATE "$1" 2>/dev/null
 }
 
-partitions () {
-	lsblk --noheadings --list --output PATH,TYPE "$@" 2> /dev/null | grep --regexp "part\|crypt\|lvm" | awk '{print $1}'
+partitions() {
+	lsblk --noheadings --list --output PATH,TYPE "$@" 2>/dev/null | grep --regexp "part\|crypt\|lvm" | awk '{print $1}'
 }
 
-partition_info () {
-	lsblk --noheadings --list --output PATH,SIZE,MOUNTPOINT,FSTYPE,FSUSE%,PARTTYPE,PARTTYPENAME,PARTFLAGS "$1" 2> /dev/null
+partition_info() {
+	lsblk --noheadings --list --output PATH,SIZE,MOUNTPOINT,FSTYPE,FSUSE%,PARTTYPE,PARTTYPENAME,PARTFLAGS "$1" 2>/dev/null
 }
 
-mount_point () {
-	lsblk --noheadings --list --output MOUNTPOINT "$1" 2> /dev/null
+mount_point() {
+	lsblk --noheadings --list --output MOUNTPOINT "$1" 2>/dev/null
 }
 
-partition_table_type () {
-	lsblk --nodeps --noheadings --list --output PTTYPE "$1" 2> /dev/null
+partition_table_type() {
+	lsblk --nodeps --noheadings --list --output PTTYPE "$1" 2>/dev/null
 }
 
-partition_type () {
-	lsblk --noheadings --nodeps --list --output PARTTYPE "$1" 2> /dev/null
+partition_type() {
+	lsblk --noheadings --nodeps --list --output PARTTYPE "$1" 2>/dev/null
 }
 
-block_type () {
-	lsblk --nodeps --noheadings --list --output TYPE "$1" 2> /dev/null
+block_type() {
+	lsblk --nodeps --noheadings --list --output TYPE "$1" 2>/dev/null
 }
 
-lvm_needed () {
-	lsblk --all --noheadings --list --output TYPE  2> /dev/null | grep lvm > /dev/null 2>&1
+lvm_needed() {
+	lsblk --all --noheadings --list --output TYPE 2>/dev/null | grep lvm >/dev/null 2>&1
 }
 
-uuid () {
-	lsblk --nodeps --noheadings --list --output UUID "$1" 2> /dev/null
+uuid() {
+	lsblk --nodeps --noheadings --list --output UUID "$1" 2>/dev/null
 }
 
-unpartitioned_space () {
-	sfdisk --list-free "$1" 2> /dev/null | head -n1
+unpartitioned_space() {
+	sfdisk --list-free "$1" 2>/dev/null | head -n1
 }
 
-partition_table () {
-	sfdisk --list "$1" 2> /dev/null
+partition_table() {
+	sfdisk --list "$1" 2>/dev/null
 }
 
-partition_number () {
+partition_number() {
 	printf "%s" "$1" | grep --only-matching --color=never --regexp '[0-9]\+$'
 }
 
-partition_disk () {
+partition_disk() {
 	printf "/dev/%s" "$(lsblk --noheadings --output PKNAME "$1")"
 }
 
-crypt_name () {
+crypt_name() {
 	printf "crypt-%s" "$(basename "$1")"
 }
 
-pv () {
-	pvs --select "vg_name=\"$1\"" --noheadings --options pv_name 2> /dev/null
+pv() {
+	pvs --select "vg_name=\"$1\"" --noheadings --options pv_name 2>/dev/null
 }
 
-mp_block_device () {
-	df --output=source "$1" 2> /dev/null | tail --lines +2
+mp_block_device() {
+	df --output=source "$1" 2>/dev/null | tail --lines +2
 }
 
-parent_devices () {
-	KNAME="$(lsblk --noheadings --nodeps --list --output KNAME "$1" 2> /dev/null)"
-	PARENTS="$(ls "/sys/class/block/$KNAME/slaves" 2> /dev/null)"
+parent_devices() {
+	KNAME="$(lsblk --noheadings --nodeps --list --output KNAME "$1" 2>/dev/null)"
+	PARENTS="$(ls "/sys/class/block/$KNAME/slaves" 2>/dev/null)"
 	for p in $PARENTS; do
 		if [ -f "/sys/class/block/$p/dm/name" ]; then
 			PARENT_NAME="/dev/mapper/$(cat "/sys/class/block/$p/dm/name")"
@@ -210,7 +209,7 @@ parent_devices () {
 	done
 }
 
-kernel_cmdline () {
+kernel_cmdline() {
 	CMD=
 	BD="$(mp_block_device "$MNT/")"
 	BD_TYPE="$(block_type "$BD")"
@@ -256,32 +255,42 @@ kernel_cmdline () {
 	trim "rw bgrt_disable $CMD"
 }
 
-decode_partition () {
+decode_partition() {
 	case $1 in
-		"$LINUX_UUID"|"$LINUX_HEX")
-			printf Linux;;
-		"$SWAP_UUID"|"$SWAP_HEX")
-			printf Swap;;
-		"$EFI_UUID")
-			printf EFI;;
-		"$MBD_UUID")
-			printf "\"Microsoft Basic Data Partition\"";;
-		"$LUKS_UUID"|"$LUKS_HEX")
-			printf LUKS;;
-		"$LVM_UUID"|"$LVM_HEX")
-			printf LVM;;
-		"$FAT_HEX")
-			printf FAT32;;
-		"$NTFS_EXFAT_HEX")
-			printf "NTFS/exFAT";;
-		"$EXT_HEX")
-			printf "\"Extended Partition\"";;
-		*)
-			printf UNKNOWN;;
+	"$LINUX_UUID" | "$LINUX_HEX")
+		printf Linux
+		;;
+	"$SWAP_UUID" | "$SWAP_HEX")
+		printf Swap
+		;;
+	"$EFI_UUID")
+		printf EFI
+		;;
+	"$MBD_UUID")
+		printf "\"Microsoft Basic Data Partition\""
+		;;
+	"$LUKS_UUID" | "$LUKS_HEX")
+		printf LUKS
+		;;
+	"$LVM_UUID" | "$LVM_HEX")
+		printf LVM
+		;;
+	"$FAT_HEX")
+		printf FAT32
+		;;
+	"$NTFS_EXFAT_HEX")
+		printf "NTFS/exFAT"
+		;;
+	"$EXT_HEX")
+		printf "\"Extended Partition\""
+		;;
+	*)
+		printf UNKNOWN
+		;;
 	esac
 }
 
-partition_types () {
+partition_types() {
 	if [ "$1" = gpt ]; then
 		printf "%s" "$LINUX_UUID $(decode_partition "$LINUX_UUID") $SWAP_UUID $(decode_partition "$SWAP_UUID") $EFI_UUID $(decode_partition "$EFI_UUID") $LUKS_UUID $(decode_partition "$LUKS_UUID") $LVM_UUID $(decode_partition "$LVM_UUID") $MBD_UUID $(decode_partition "$MBD_UUID")"
 	elif [ "$1" = dos ]; then
@@ -289,21 +298,21 @@ partition_types () {
 	fi
 }
 
-default_method () {
+default_method() {
 	if [ ! -f "$TMP_METHOD" ]; then
 		if [ -d "$REPO_DIR" ] && [ -f "$PACMAN_OFFLINE" ]; then
-			printf OFFLINE > $TMP_METHOD
+			printf OFFLINE >$TMP_METHOD
 		else
-			printf ONLINE > $TMP_METHOD
+			printf ONLINE >$TMP_METHOD
 		fi
 	fi
 }
 
-method () {
-	cat $TMP_METHOD 2> /dev/null
+method() {
+	cat $TMP_METHOD 2>/dev/null
 }
 
-toggle_method () {
+toggle_method() {
 	METHOD="$(method)"
 	if [ "$METHOD" = ONLINE ]; then
 		if [ -d "$REPO_DIR" ] && [ -f "$PACMAN_OFFLINE" ]; then
@@ -314,14 +323,14 @@ toggle_method () {
 	else
 		METHOD=ONLINE
 	fi
-	printf "%s" "$METHOD" > $TMP_METHOD
+	printf "%s" "$METHOD" >$TMP_METHOD
 }
 
-is_installed () {
-	arch-chroot $MNT pacman --query --quiet "$@" > /dev/null 2>&1
+is_installed() {
+	arch-chroot $MNT pacman --query --quiet "$@" >/dev/null 2>&1
 }
 
-network_interfaces () {
+network_interfaces() {
 	INTERFACES=$(networkctl list --no-pager --no-legend | awk '{print $2}')
 	for i in $INTERFACES; do
 		INT_TYPE=$(interface_status "$i" | grep "Type:" | awk '{print $2}')
@@ -331,11 +340,11 @@ network_interfaces () {
 	done
 }
 
-interface_status () {
+interface_status() {
 	networkctl status "$1" --no-pager --no-legend --lines 0 | tail --lines +2
 }
 
-check_link () {
+check_link() {
 	for IFACE in $(network_interfaces); do
 		STATE=$(networkctl list --no-pager --no-legend "$IFACE" | awk '{print $4}')
 		if [ "$STATE" = routable ]; then
@@ -345,7 +354,7 @@ check_link () {
 	exit 1
 }
 
-title () {
+title() {
 	TITLE="Link:"
 	if (check_link); then
 		TITLE="$TITLE OK"
@@ -356,7 +365,7 @@ title () {
 	printf "%s" "$TITLE"
 }
 
-main () {
+main() {
 	SELECTED="${1-settings}"
 	MAIN_MENU="log Log
 		settings Settings
@@ -373,31 +382,41 @@ main () {
 		quit
 	fi
 	case $CHOICE in
-		log)
-			tb "$LOG"
-			main;;
-		settings)
-			settings;;
-		disk)
-			disks_menu;;
-		lvm)
-			lvm_menu;;
-		packs)
-			packs;;
-		users)
-			users_menu;;
-		install)
-			start_install;;
-		advanced)
-			advanced;;
-		reboot)
-			quit reboot;;
-		*)
-			main;;
+	log)
+		tb "$LOG"
+		main
+		;;
+	settings)
+		settings
+		;;
+	disk)
+		disks_menu
+		;;
+	lvm)
+		lvm_menu
+		;;
+	packs)
+		packs
+		;;
+	users)
+		users_menu
+		;;
+	install)
+		start_install
+		;;
+	advanced)
+		advanced
+		;;
+	reboot)
+		quit reboot
+		;;
+	*)
+		main
+		;;
 	esac
 }
 
-advanced () {
+advanced() {
 	SELECTED="${1-chroot}"
 	ADVANCED_MENU="chroot \"Enter chroot shell\"
 		initram \"Regenerate initial ramdisk\""
@@ -406,20 +425,23 @@ advanced () {
 	if [ $exitstatus -ne 0 ]; then
 		main advanced
 	fi
-	if (mountpoint $MNT > /dev/null 2>&1); then
+	if (mountpoint $MNT >/dev/null 2>&1); then
 		case $CHOICE in
-			chroot)
-				if [ -n "${TMUX-}" ] && [ -n "$TM" ]; then
-					"$TM" new-window "arch-chroot $MNT"
-				else
-					arch-chroot "$MNT"
-				fi
-				advanced chroot;;
-			initram)
-				arch-chroot $MNT mkinitcpio --verbose --allpresets 2>&1 | pb
-				advanced initram;;
-			*)
-				advanced;;
+		chroot)
+			if [ -n "${TMUX-}" ] && [ -n "$TM" ]; then
+				"$TM" new-window "arch-chroot $MNT"
+			else
+				arch-chroot "$MNT"
+			fi
+			advanced chroot
+			;;
+		initram)
+			arch-chroot $MNT mkinitcpio --verbose --allpresets 2>&1 | pb
+			advanced initram
+			;;
+		*)
+			advanced
+			;;
 		esac
 	else
 		msg "$MNT is not a mountpoint"
@@ -427,7 +449,7 @@ advanced () {
 	fi
 }
 
-settings () {
+settings() {
 	SELECTED_SETTING="${1-key}"
 	SETTINGS_MENU="toggle \"Toggle installation method (online or offline)\"
 		wifi \"Connect to Wi-Fi\"
@@ -441,60 +463,33 @@ settings () {
 		main settings
 	fi
 	case $CHOICE in
-		toggle)
-			toggle_method
-			settings toggle;;
-		wifi)
-			wifi;;
-		key)
-			key;;
-		loc)
-			loc;;
-		host)
-			host;;
-		tz)
-			tz;;
-		*)
-			settings;;
+	toggle)
+		toggle_method
+		settings toggle
+		;;
+	wifi)
+		wifi
+		;;
+	key)
+		key
+		;;
+	loc)
+		loc
+		;;
+	host)
+		host
+		;;
+	tz)
+		tz
+		;;
+	*)
+		settings
+		;;
 	esac
 }
 
-is_sel_compose () {
-	COMPOSE="$(cat "$TMP_COMPOSE" 2> /dev/null)"
-	if [ "$COMPOSE" = "$1" ]; then
-		echo ON
-	else
-		echo OFF
-	fi
-}
-
-compose_key_entry () {
-	echo "$1 $2 $(is_sel_compose "$1")"
-}
-
-compose () {
-	compose_key_entry "compose:ralt" "\"Right Alt\""
-	compose_key_entry "compose:lwin" "\"Left Win\""
-	compose_key_entry "compose:lwin-altgr" "\"3rd level of Left Win\""
-	compose_key_entry "compose:rwin" "\"Right Win\""
-	compose_key_entry "compose:rwin-altgr" "\"3rd level of Right Win\""
-	compose_key_entry "compose:menu" "Menu"
-	compose_key_entry "compose:menu-altgr" "\"3rd level of Menu\""
-	compose_key_entry "compose:lctrl" "\"Left Ctrl\""
-	compose_key_entry "compose:lctrl-altgr" "\"3rd level of Left Ctrl\""
-	compose_key_entry "compose:rctrl" "\"Right Ctrl\""
-	compose_key_entry "compose:rctrl-altgr" "\"3rd level of Right Ctrl\""
-	compose_key_entry "compose:caps" "\"Caps Lock\""
-	compose_key_entry "compose:caps-altgr" "\"3rd level of Caps Lock\""
-	compose_key_entry "compose:102" "\"The '< >' key\""
-	compose_key_entry "compose:102-altgr" "\"3rd level of the '< >' key\""
-	compose_key_entry "compose:paus" "Pause"
-	compose_key_entry "compose:prsc" "PrtSc"
-	compose_key_entry "compose:sclk" "\"Scroll Lock\""
-}
-
-key () {
-	KEYMAP=$(cat $TMP_KEYMAP 2> /dev/null)
+key() {
+	KEYMAP=$(cat $TMP_KEYMAP 2>/dev/null)
 	KEYMAPS_LIST=
 	for k in $(localectl list-keymaps --no-pager); do
 		if [ "$k" = "$KEYMAP" ]; then SELECTED=ON; else SELECTED=OFF; fi
@@ -510,24 +505,14 @@ key () {
 		settings key
 	fi
 	if [ -n "$KEYMAP_CHOICE" ]; then
-		loadkeys "$KEYMAP_CHOICE" && \
-		printf "%s" "$KEYMAP_CHOICE" > $TMP_KEYMAP && \
-		msg "Keymap set to $KEYMAP_CHOICE"
-	fi
-	COMPOSE=$(cat $TMP_COMPOSE 2> /dev/null)
-	COMPOSE_CHOICE=$(compose | dlg --cancel-label "Back" --title "Compose Key (current: '$COMPOSE')" --radiolist "")
-	exitstatus=$?
-	if [ $exitstatus -ne 0 ]; then
-		settings key
-	fi
-	if [ -n "$COMPOSE_CHOICE" ]; then
-		printf "%s" "$COMPOSE_CHOICE" > $TMP_COMPOSE && \
-		msg "Compose key set to $COMPOSE_CHOICE"
+		loadkeys "$KEYMAP_CHOICE" &&
+			printf "%s" "$KEYMAP_CHOICE" >$TMP_KEYMAP &&
+			msg "Keymap set to $KEYMAP_CHOICE"
 	fi
 	settings loc
 }
 
-loc () {
+loc() {
 	if [ ! -f "$TMP_LOCALEGEN" ]; then
 		cp /etc/locale.gen "$TMP_LOCALEGEN"
 	fi
@@ -546,7 +531,7 @@ loc () {
 			fi
 			LOCALES="$LOCALES $N ${R% *} $SELECTED"
 		fi
-	done < "$TMP_LOCALEGEN"
+	done <"$TMP_LOCALEGEN"
 	if [ -z "$LOCALES" ]; then
 		msg "No locale found"
 		settings loc
@@ -562,7 +547,7 @@ loc () {
 		rm --force "$TMP_LANG"
 		settings loc
 	fi
-	CURR_LANG="$(cat $TMP_LANG 2> /dev/null)"
+	CURR_LANG="$(cat $TMP_LANG 2>/dev/null)"
 	LANGS_LIST=
 	LANGS=
 	for L in $LOCALES_CHOICE; do
@@ -587,14 +572,14 @@ loc () {
 		settings loc
 	fi
 	if [ -n "$LANG_CHOICE" ]; then
-		printf "%s" "$LANG_CHOICE" > $TMP_LANG
+		printf "%s" "$LANG_CHOICE" >$TMP_LANG
 		msg "Selected locale(s): $(trim "$LANGS")\nSelected language: $LANG_CHOICE"
 	fi
 	settings host
 }
 
-host () {
-	_HOSTNAME=$(cat $TMP_HOSTNAME 2> /dev/null)
+host() {
+	_HOSTNAME=$(cat $TMP_HOSTNAME 2>/dev/null)
 	HOSTNAME="$(echo "$_HOSTNAME" | sdlg --cancel-label "Back" --title "Hostname" --inputbox "")"
 	exitstatus=$?
 	if [ $exitstatus -ne 0 ]; then
@@ -603,18 +588,18 @@ host () {
 	HOSTNAME="$(trim "$HOSTNAME")"
 	HOSTNAME="${HOSTNAME%% *}"
 	if [ -n "$HOSTNAME" ]; then
-		printf "%s" "$HOSTNAME" > $TMP_HOSTNAME && \
-		msg "Hostname set to $HOSTNAME"
+		printf "%s" "$HOSTNAME" >$TMP_HOSTNAME &&
+			msg "Hostname set to $HOSTNAME"
 		settings tz
 	else
-		rm --force $TMP_HOSTNAME 2> /dev/null && \
-		msg "Hostname unset"
+		rm --force $TMP_HOSTNAME 2>/dev/null &&
+			msg "Hostname unset"
 		settings host
 	fi
 }
 
-tz () {
-	TIMEZONE=$(cat $TMP_TZ 2> /dev/null)
+tz() {
+	TIMEZONE=$(cat $TMP_TZ 2>/dev/null)
 	TZ_LIST=
 	for t in $(timedatectl list-timezones --no-pager); do
 		if [ "$t" = "$TIMEZONE" ]; then SELECTED=ON; else SELECTED=OFF; fi
@@ -630,16 +615,16 @@ tz () {
 		settings tz
 	fi
 	if [ -n "$TZ_CHOICE" ]; then
-		printf "%s" "$TZ_CHOICE" > $TMP_TZ && \
-		msg "Timezone set to $TZ_CHOICE"
+		printf "%s" "$TZ_CHOICE" >$TMP_TZ &&
+			msg "Timezone set to $TZ_CHOICE"
 		settings tz
 	fi
 	settings tz
 }
 
-wifi () {
+wifi() {
 	# iwctl, as of now, is not very script-friendly, so for now wifi configuration will be done using iwctl repl
-	if (command -v iwctl > /dev/null 2>&1); then
+	if (command -v iwctl >/dev/null 2>&1); then
 		iwctl
 	else
 		msg "iwctl command not found"
@@ -647,9 +632,9 @@ wifi () {
 	settings key
 }
 
-lvm_menu () {
+lvm_menu() {
 	VG=
-	for g in $(vgs --noheadings --options NAME 2> /dev/null); do
+	for g in $(vgs --noheadings --options NAME 2>/dev/null); do
 		VG="$VG $g $g"
 	done
 	VG="$VG new_vg +VG"
@@ -668,7 +653,7 @@ lvm_menu () {
 	lvm_menu
 }
 
-new_vg () {
+new_vg() {
 	PV=
 	for pv in $(pv ""); do
 		PV="$PV $pv $pv OFF"
@@ -698,9 +683,9 @@ new_vg () {
 	lvm_menu
 }
 
-vg_options () {
+vg_options() {
 	if [ -n "$1" ]; then
-		if [ -z "$(vgs --select vg_name="$1" 2> /dev/null)" ]; then
+		if [ -z "$(vgs --select vg_name="$1" 2>/dev/null)" ]; then
 			msg "'$1' is not a valid Volume Group"
 			lvm_menu
 		fi
@@ -713,101 +698,111 @@ vg_options () {
 			activate Activate
 			deactivate Deactivate
 			export \"Toggle Export\""
-		VGO_CHOICE=$(echo "$VG_OPTIONS_MENU" | dlg --no-tags --cancel-label "Back" --title "Options for VG $1" --menu "$(vgs "$1" 2> /dev/null)")
+		VGO_CHOICE=$(echo "$VG_OPTIONS_MENU" | dlg --no-tags --cancel-label "Back" --title "Options for VG $1" --menu "$(vgs "$1" 2>/dev/null)")
 		exitstatus=$?
 		if [ $exitstatus -ne 0 ]; then
 			lvm_menu "$1"
 		fi
 		case $VGO_CHOICE in
-			logical)
-				logical_volumes "$1";;
-			extend)
-				PV=
-				for pv in $(pv ""); do
-					PV="$PV $pv $pv OFF"
-				done
-				if [ -z "$PV" ]; then
-					msg "Cannot find available PVs for extending VG $1"
-				else
-					PV_CHOICE=$(echo "$PV" | dlg --no-tags --cancel-label "Back" --title "Available PVs" --checklist "")
-					exitstatus=$?
-					if [ $exitstatus -ne 0 ]; then
-						vg_options "$1"
-					fi
-					if [ -n "$PV_CHOICE" ]; then
-						vgextend --verbose "$1" $PV_CHOICE 2>&1 | pb
-					fi
-				fi
-				vg_options "$1";;
-			reduce)
-				PV=
-				for pv in $(pv "$1"); do
-					PV="$PV $pv $pv OFF"
-				done
-				PV_CHOICE=$(echo "$PV" | dlg --no-tags --cancel-label "Back" --title "PVs in VG $1" --checklist "")
+		logical)
+			logical_volumes "$1"
+			;;
+		extend)
+			PV=
+			for pv in $(pv ""); do
+				PV="$PV $pv $pv OFF"
+			done
+			if [ -z "$PV" ]; then
+				msg "Cannot find available PVs for extending VG $1"
+			else
+				PV_CHOICE=$(echo "$PV" | dlg --no-tags --cancel-label "Back" --title "Available PVs" --checklist "")
 				exitstatus=$?
 				if [ $exitstatus -ne 0 ]; then
 					vg_options "$1"
 				fi
 				if [ -n "$PV_CHOICE" ]; then
-					vgreduce --verbose "$1" $PV_CHOICE 2>&1 | pb
+					vgextend --verbose "$1" $PV_CHOICE 2>&1 | pb
 				fi
-				vg_options "$1";;
-			rename)
-				NAME="$(echo "" | sdlg --cancel-label "Back" --title "Rename VG $1" --inputbox "")"
-				NAME="$(trim "$NAME")"
-				NAME="${NAME%% *}"
-				if [ -n "$NAME" ]; then
-					if (is_valid "$NAME"); then
-						vgrename --verbose "$1" "$NAME" 2>&1 | pb
-						vg_options "$NAME"
-					else
-						msg "$NAME is not a valid identifier"
-					fi
-				fi
-				vg_options "$1";;
-			remove)
-				LVS="$(vgs "$1" --noheadings --options lv_count 2>&1)"
-				if [ "$LVS" -gt 0 ]; then
-					msg "VG $1 has $LVS LVs"
-					vg_options "$1"
-				fi
-				if (confirm "Remove VG $1?"); then
-					vgremove --verbose "$1" 2>&1 | pb
-					lvm_menu
-				fi
-				vg_options "$1";;
-			missing)
-				if (confirm "Remove missing PVs from group $1?"); then
-					vgreduce --verbose "$1" --removemissing 2>&1 | pb
-				fi
-				vg_options "$1";;
-			activate)
-				vgchange --verbose --activate y "$1" 2>&1 | pb
-				vg_options "$1";;
-			deactivate)
-				vgchange --verbose --activate n "$1" 2>&1 | pb
-				vg_options "$1";;
-			export)
-				IS_EXP=$(vgs "$1" --noheadings --option vg_exported 2> /dev/null)
-				if [ -z "$IS_EXP" ]; then
-					if (confirm "VG $1 is not exported. Export it?"); then
-						vgexport --verbose "$1" 2>&1 | pb
-					fi
+			fi
+			vg_options "$1"
+			;;
+		reduce)
+			PV=
+			for pv in $(pv "$1"); do
+				PV="$PV $pv $pv OFF"
+			done
+			PV_CHOICE=$(echo "$PV" | dlg --no-tags --cancel-label "Back" --title "PVs in VG $1" --checklist "")
+			exitstatus=$?
+			if [ $exitstatus -ne 0 ]; then
+				vg_options "$1"
+			fi
+			if [ -n "$PV_CHOICE" ]; then
+				vgreduce --verbose "$1" $PV_CHOICE 2>&1 | pb
+			fi
+			vg_options "$1"
+			;;
+		rename)
+			NAME="$(echo "" | sdlg --cancel-label "Back" --title "Rename VG $1" --inputbox "")"
+			NAME="$(trim "$NAME")"
+			NAME="${NAME%% *}"
+			if [ -n "$NAME" ]; then
+				if (is_valid "$NAME"); then
+					vgrename --verbose "$1" "$NAME" 2>&1 | pb
+					vg_options "$NAME"
 				else
-					if (confirm "VG $1 is exported. Import it?"); then
-						vgimport --verbose "$1" 2>&1 | pb
-					fi
+					msg "$NAME is not a valid identifier"
 				fi
-				vg_options "$1";;
-			*)
-				lvm_menu "$1";;
+			fi
+			vg_options "$1"
+			;;
+		remove)
+			LVS="$(vgs "$1" --noheadings --options lv_count 2>&1)"
+			if [ "$LVS" -gt 0 ]; then
+				msg "VG $1 has $LVS LVs"
+				vg_options "$1"
+			fi
+			if (confirm "Remove VG $1?"); then
+				vgremove --verbose "$1" 2>&1 | pb
+				lvm_menu
+			fi
+			vg_options "$1"
+			;;
+		missing)
+			if (confirm "Remove missing PVs from group $1?"); then
+				vgreduce --verbose "$1" --removemissing 2>&1 | pb
+			fi
+			vg_options "$1"
+			;;
+		activate)
+			vgchange --verbose --activate y "$1" 2>&1 | pb
+			vg_options "$1"
+			;;
+		deactivate)
+			vgchange --verbose --activate n "$1" 2>&1 | pb
+			vg_options "$1"
+			;;
+		export)
+			IS_EXP=$(vgs "$1" --noheadings --option vg_exported 2>/dev/null)
+			if [ -z "$IS_EXP" ]; then
+				if (confirm "VG $1 is not exported. Export it?"); then
+					vgexport --verbose "$1" 2>&1 | pb
+				fi
+			else
+				if (confirm "VG $1 is exported. Import it?"); then
+					vgimport --verbose "$1" 2>&1 | pb
+				fi
+			fi
+			vg_options "$1"
+			;;
+		*)
+			lvm_menu "$1"
+			;;
 		esac
 	fi
 	lvm_menu
 }
 
-new_lv () {
+new_lv() {
 	NAME_SWITCH=
 	PV=
 	for pv in $(pv "$1"); do
@@ -834,17 +829,19 @@ new_lv () {
 	logical_volumes "$1"
 }
 
-lv_options () {
+lv_options() {
 	VG=
 	LV=
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
-			-v)
-				VG=${2-}
-				shift 2;;
-			-l)
-				LV=${2-}
-				shift 2;;
+		-v)
+			VG=${2-}
+			shift 2
+			;;
+		-l)
+			LV=${2-}
+			shift 2
+			;;
 		esac
 	done
 	if [ -z "$VG" ] || [ -z "$LV" ]; then
@@ -855,60 +852,66 @@ lv_options () {
 		rename Rename
 		resize Resize
 		remove Remove"
-	LV_OPTION=$(echo "$LV_OPTIONS_MENU" | dlg --no-tags --cancel-label "Back" --title "Options for LV $VG/$LV" --menu "$(lvs "$VG/$LV" 2> /dev/null)")
+	LV_OPTION=$(echo "$LV_OPTIONS_MENU" | dlg --no-tags --cancel-label "Back" --title "Options for LV $VG/$LV" --menu "$(lvs "$VG/$LV" 2>/dev/null)")
 	exitstatus=$?
 	if [ $exitstatus -ne 0 ]; then
 		logical_volumes "$VG"
 	fi
 	case $LV_OPTION in
-		activate)
-			lvchange --verbose --activate y "$VG/$LV" 2>&1 | pb
-			lv_options -v "$VG" -l "$LV";;
-		deactivate)
-			lvchange --verbose --activate n "$VG/$LV" 2>&1 | pb
-			lv_options -v "$VG" -l "$LV";;
-		rename)
-			NAME="$(echo "" | sdlg --cancel-label "Cancel" --title "Rename LV $VG/$LV" --inputbox "")"
-			NAME="$(trim "$NAME")"
-			NAME="${NAME%% *}"
-			if [ -n "$NAME" ]; then
-				if (is_valid "$NAME"); then
-					lvrename --verbose "$VG" "$LV" "$NAME" 2>&1 | pb
-					lv_options -v "$VG" -l "$NAME"
-				else
-					msg "$NAME is not a valid identifier"
-				fi
-			fi
-			lv_options -v "$VG" -l "$LV";;
-		resize)
-			SIZE=$(trim "$(echo "" | sdlg --cancel-label "Back" --title "Resize $VG/$LV" --inputbox "Options: percentage of the remaining free space (e.g: 75%); case insensitive 2-based size unit (e.g: 100G or 100g for 100 GiB); if - or + are prepended, size will be decreased or increased by the specified quantity")")
-			SIZE="$(trim "$SIZE")"
-			SIZE="${SIZE%% *}"
-			if [ -z "$SIZE" ]; then
-				lv_options -v "$VG" -l "$LV"
-			fi
-			if [ "${SIZE#"${SIZE%?}"}" = "%" ]; then
-				SIZE="--extents ${SIZE}FREE"
+	activate)
+		lvchange --verbose --activate y "$VG/$LV" 2>&1 | pb
+		lv_options -v "$VG" -l "$LV"
+		;;
+	deactivate)
+		lvchange --verbose --activate n "$VG/$LV" 2>&1 | pb
+		lv_options -v "$VG" -l "$LV"
+		;;
+	rename)
+		NAME="$(echo "" | sdlg --cancel-label "Cancel" --title "Rename LV $VG/$LV" --inputbox "")"
+		NAME="$(trim "$NAME")"
+		NAME="${NAME%% *}"
+		if [ -n "$NAME" ]; then
+			if (is_valid "$NAME"); then
+				lvrename --verbose "$VG" "$LV" "$NAME" 2>&1 | pb
+				lv_options -v "$VG" -l "$NAME"
 			else
-				SIZE="--size ${SIZE}"
+				msg "$NAME is not a valid identifier"
 			fi
-			lvresize --verbose --yes $SIZE "$VG/$LV" 2>&1 | pb
-			lv_options -v "$VG" -l "$LV";;
-		remove)
-			if (confirm "Remove LV $VG/$LV?"); then
-				lvremove --verbose --force "$VG/$LV" 2>&1 | pb
-				vg_options "$VG"
-			fi
-			lv_options -v "$VG" -l "$LV";;
-		*)
-			lv_options -v "$VG" -l "$LV";;
+		fi
+		lv_options -v "$VG" -l "$LV"
+		;;
+	resize)
+		SIZE=$(trim "$(echo "" | sdlg --cancel-label "Back" --title "Resize $VG/$LV" --inputbox "Options: percentage of the remaining free space (e.g: 75%); case insensitive 2-based size unit (e.g: 100G or 100g for 100 GiB); if - or + are prepended, size will be decreased or increased by the specified quantity")")
+		SIZE="$(trim "$SIZE")"
+		SIZE="${SIZE%% *}"
+		if [ -z "$SIZE" ]; then
+			lv_options -v "$VG" -l "$LV"
+		fi
+		if [ "${SIZE#"${SIZE%?}"}" = "%" ]; then
+			SIZE="--extents ${SIZE}FREE"
+		else
+			SIZE="--size ${SIZE}"
+		fi
+		lvresize --verbose --yes $SIZE "$VG/$LV" 2>&1 | pb
+		lv_options -v "$VG" -l "$LV"
+		;;
+	remove)
+		if (confirm "Remove LV $VG/$LV?"); then
+			lvremove --verbose --force "$VG/$LV" 2>&1 | pb
+			vg_options "$VG"
+		fi
+		lv_options -v "$VG" -l "$LV"
+		;;
+	*)
+		lv_options -v "$VG" -l "$LV"
+		;;
 	esac
 	lv_options -v "$VG" -l "$NAME"
 }
 
-logical_volumes () {
+logical_volumes() {
 	LV=
-	for l in $(lvs --noheadings --options NAME "$1" 2> /dev/null); do
+	for l in $(lvs --noheadings --options NAME "$1" 2>/dev/null); do
 		LV="$LV $l $l"
 	done
 	LV="$LV new_lv +LV"
@@ -926,7 +929,7 @@ logical_volumes () {
 	vg_options "$1"
 }
 
-disks_menu () {
+disks_menu() {
 	DISKS_LIST=
 	for d in $(disks); do
 		DISKS_LIST="$DISKS_LIST $d $d"
@@ -947,13 +950,14 @@ disks_menu () {
 	disks_menu
 }
 
-new_partition () {
+new_partition() {
 	DISK=
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
-			-d)
-				DISK=${2-}
-				shift 2;;
+		-d)
+			DISK=${2-}
+			shift 2
+			;;
 		esac
 	done
 	if [ -z "$DISK" ]; then
@@ -992,17 +996,19 @@ new_partition () {
 	new_partition -d "$DISK"
 }
 
-disk_options () {
+disk_options() {
 	DISK=
 	SELECTED_DO=
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
-			-d)
-				DISK=${2-}
-				shift 2;;
-			-s)
-				SELECTED_DO=${2-}
-				shift 2;;
+		-d)
+			DISK=${2-}
+			shift 2
+			;;
+		-s)
+			SELECTED_DO=${2-}
+			shift 2
+			;;
 		esac
 	done
 	if [ -z "$DISK" ]; then
@@ -1025,50 +1031,59 @@ disk_options () {
 		disks_menu "$DISK"
 	fi
 	case $CHOICE in
-		gpt|dos)
-			MSG="$CHOICE partition table in disk $DISK"
-			WAR="\nBeware that booting a GPT disk via BIOS will not work unless an additional BIOS partition is created (not covered in this script); on the other hand, booting a DOS disk via UEFI might not work on some firmware.\nThese considerations are meant for the partition that holds the bootloader (/boot or ESP) if any, otherwise to the root (/) partition.\n\nDOS partition tables can handle disk size up to 2 TiB and can have up to 4 primary partitions; if more are needed, the disk should be partitioned with 3 primary partitions and 1 extended partition. The latter will enable the disk to contain more logical partitions.\n\nIn order to overcome this limits, GPT partition table can be used.\n"
-			if (confirm "This will create a new empty $MSG.\n$WAR\nContinue?"); then
-				log "creating new $MSG"
-				echo "label: $CHOICE" | sfdisk "$DISK" --wipe always 2>&1 | pb
-			fi
-			disk_options -d "$DISK" -s "$CHOICE";;
-		new)
-			new_partition -d "$DISK";;
-		part)
-			part -d "$DISK";;
-		sort)
-			if (confirm "Reorder partitions on disk $DISK?"); then
-				log "reordering partitions on disk $DISK"
-				sfdisk --reorder "$DISK" 2>&1 | pb
-			fi
-			disk_options -d "$DISK" -s "$CHOICE";;
-		wipe)
-			if (confirm "This will delete all signatures in disk $DISK and its partitions. A new partition table will be needed. Continue?"); then
-				log "deleting signatures in disk $DISK"
-				wipefs "$DISK"* --all --force 2>&1 | pb
-			fi
-			disk_options -d "$DISK" -s "$CHOICE";;
-		manual)
-			log "opening fdisk for disk $DISK"
-			fdisk "$DISK"
-			disk_options -d "$DISK" -s "$CHOICE";;
-		*)
-			disk_options -d "$DISK" -s "$CHOICE";;
+	gpt | dos)
+		MSG="$CHOICE partition table in disk $DISK"
+		WAR="\nBeware that booting a GPT disk via BIOS will not work unless an additional BIOS partition is created (not covered in this script); on the other hand, booting a DOS disk via UEFI might not work on some firmware.\nThese considerations are meant for the partition that holds the bootloader (/boot or ESP) if any, otherwise to the root (/) partition.\n\nDOS partition tables can handle disk size up to 2 TiB and can have up to 4 primary partitions; if more are needed, the disk should be partitioned with 3 primary partitions and 1 extended partition. The latter will enable the disk to contain more logical partitions.\n\nIn order to overcome this limits, GPT partition table can be used.\n"
+		if (confirm "This will create a new empty $MSG.\n$WAR\nContinue?"); then
+			log "creating new $MSG"
+			echo "label: $CHOICE" | sfdisk "$DISK" --wipe always 2>&1 | pb
+		fi
+		disk_options -d "$DISK" -s "$CHOICE"
+		;;
+	new)
+		new_partition -d "$DISK"
+		;;
+	part)
+		part -d "$DISK"
+		;;
+	sort)
+		if (confirm "Reorder partitions on disk $DISK?"); then
+			log "reordering partitions on disk $DISK"
+			sfdisk --reorder "$DISK" 2>&1 | pb
+		fi
+		disk_options -d "$DISK" -s "$CHOICE"
+		;;
+	wipe)
+		if (confirm "This will delete all signatures in disk $DISK and its partitions. A new partition table will be needed. Continue?"); then
+			log "deleting signatures in disk $DISK"
+			wipefs "$DISK"* --all --force 2>&1 | pb
+		fi
+		disk_options -d "$DISK" -s "$CHOICE"
+		;;
+	manual)
+		log "opening fdisk for disk $DISK"
+		fdisk "$DISK"
+		disk_options -d "$DISK" -s "$CHOICE"
+		;;
+	*)
+		disk_options -d "$DISK" -s "$CHOICE"
+		;;
 	esac
 }
 
-part () {
+part() {
 	DISK=
 	SELECTED_PART=
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
-			-d)
-				DISK=${2-}
-				shift 2;;
-			-s)
-				SELECTED_PART=${2-}
-				shift 2;;
+		-d)
+			DISK=${2-}
+			shift 2
+			;;
+		-s)
+			SELECTED_PART=${2-}
+			shift 2
+			;;
 		esac
 	done
 	if [ -z "$DISK" ]; then
@@ -1093,10 +1108,10 @@ part () {
 	part -d "$DISK"
 }
 
-crypt_actions () {
-	if (cryptsetup luksDump "$1" > /dev/null 2>&1); then
+crypt_actions() {
+	if (cryptsetup luksDump "$1" >/dev/null 2>&1); then
 		MAPPER="/dev/mapper/$(crypt_name "$1")"
-		if (lsblk "$MAPPER" > /dev/null 2>&1); then
+		if (lsblk "$MAPPER" >/dev/null 2>&1); then
 			printf "close Close"
 		else
 			printf "open Open"
@@ -1104,21 +1119,24 @@ crypt_actions () {
 	fi
 }
 
-partition_options () {
+partition_options() {
 	DISK=
 	PART=
 	SELECTED_OPT=
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
-			-d)
-				DISK=${2-}
-				shift 2;;
-			-p)
-				PART=${2-}
-				shift 2;;
-			-s)
-				SELECTED_OPT=${2-}
-				shift 2;;
+		-d)
+			DISK=${2-}
+			shift 2
+			;;
+		-p)
+			PART=${2-}
+			shift 2
+			;;
+		-s)
+			SELECTED_OPT=${2-}
+			shift 2
+			;;
 		esac
 	done
 	if [ -z "$PART" ] || [ -z "$DISK" ]; then
@@ -1131,22 +1149,29 @@ partition_options () {
 	ACTIONS=
 	if [ "$BLOCK_TYPE" = part ]; then
 		case $TYPE in
-			"$LINUX_UUID"|"$LINUX_HEX")
-				ACTIONS="mkext4 Ext4 mount Mount unmount Unmount";;
-			"$SWAP_UUID"|"$SWAP_HEX")
-				ACTIONS="mkswap \"Make Swap\" swapon \"Activate Swap\" swapoff \"Deactivate Swap\"";;
-			"$LUKS_UUID"|"$LUKS_HEX")
-				ACTIONS="enc Encrypt $(crypt_actions "$PART")";;
-			"$LVM_UUID"|"$LVM_HEX")
-				INFO="$INFO\n$(pvs "$PART" 2> /dev/null)"
-				ACTIONS="pvcreate \"Create PV\"";;
-			"$EFI_UUID"|"$FAT_HEX")
-				ACTIONS="mkfat32 FAT32 mount Mount unmount Unmount";;
-			"$MBD_UUID")
-				ACTIONS="mkfat32 FAT32 mkntfs NTFS mkexfat exFAT mount Mount unmount Unmount";;
-			"$NTFS_EXFAT_HEX")
-				ACTIONS="mkntfs NTFS mkexfat exFAT mount Mount unmount Unmount";;
-			*);;
+		"$LINUX_UUID" | "$LINUX_HEX")
+			ACTIONS="mkext4 Ext4 mount Mount unmount Unmount"
+			;;
+		"$SWAP_UUID" | "$SWAP_HEX")
+			ACTIONS="mkswap \"Make Swap\" swapon \"Activate Swap\" swapoff \"Deactivate Swap\""
+			;;
+		"$LUKS_UUID" | "$LUKS_HEX")
+			ACTIONS="enc Encrypt $(crypt_actions "$PART")"
+			;;
+		"$LVM_UUID" | "$LVM_HEX")
+			INFO="$INFO\n$(pvs "$PART" 2>/dev/null)"
+			ACTIONS="pvcreate \"Create PV\""
+			;;
+		"$EFI_UUID" | "$FAT_HEX")
+			ACTIONS="mkfat32 FAT32 mount Mount unmount Unmount"
+			;;
+		"$MBD_UUID")
+			ACTIONS="mkfat32 FAT32 mkntfs NTFS mkexfat exFAT mount Mount unmount Unmount"
+			;;
+		"$NTFS_EXFAT_HEX")
+			ACTIONS="mkntfs NTFS mkexfat exFAT mount Mount unmount Unmount"
+			;;
+		*) ;;
 		esac
 		ACTIONS="$ACTIONS chtype \"Change Type\" del Delete"
 	elif [ "$BLOCK_TYPE" = crypt ]; then
@@ -1161,192 +1186,208 @@ partition_options () {
 		part -d "$DISK" -s "$PART"
 	fi
 	case $OPT in
-		mkext4)
-			if (confirm "Format $PART with ext4?"); then
-				log "formatting $PART with ext4"
-				mkfs.ext4 -v "$PART" 2>&1 | pb
-			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		mkfat32)
-			if (confirm "Format $PART with FAT32?"); then
-				log "formatting $PART with FAT32"
-				mkfs.fat -v -F 32 "$PART" 2>&1 | pb
-			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		mkntfs)
-			if (confirm "Format $PART with NTFS?"); then
-				log "formatting $PART with NTFS"
-				mkfs.ntfs --verbose "$PART" 2>&1 | pb
-			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		mkexfat)
-			if (confirm "Format $PART with exFAT?"); then
-				log "formatting $PART with exFAT"
-				mkfs.exfat --verbose "$PART" 2>&1 | pb
-			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		mkswap)
-			if (confirm "Create swap area on $PART?"); then
-				log "creating swap area on $PART"
-				mkswap --verbose "$PART" 2>&1 | pb
-			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		swapon)
-			if (confirm "Activate swap on $PART?"); then
-				log "activating swap on $PART"
-				{
-					swapon --verbose "$PART" 2>&1 && \
+	mkext4)
+		if (confirm "Format $PART with ext4?"); then
+			log "formatting $PART with ext4"
+			mkfs.ext4 -v "$PART" 2>&1 | pb
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	mkfat32)
+		if (confirm "Format $PART with FAT32?"); then
+			log "formatting $PART with FAT32"
+			mkfs.fat -v -F 32 "$PART" 2>&1 | pb
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	mkntfs)
+		if (confirm "Format $PART with NTFS?"); then
+			log "formatting $PART with NTFS"
+			mkfs.ntfs --verbose "$PART" 2>&1 | pb
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	mkexfat)
+		if (confirm "Format $PART with exFAT?"); then
+			log "formatting $PART with exFAT"
+			mkfs.exfat --verbose "$PART" 2>&1 | pb
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	mkswap)
+		if (confirm "Create swap area on $PART?"); then
+			log "creating swap area on $PART"
+			mkswap --verbose "$PART" 2>&1 | pb
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	swapon)
+		if (confirm "Activate swap on $PART?"); then
+			log "activating swap on $PART"
+			{
+				swapon --verbose "$PART" 2>&1 &&
 					echo "Swap activated on $PART"
-				} | pb
-			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		swapoff)
-			if (confirm "Deactivate swap on $PART?"); then
-				log "deactivating swap on $PART"
-				{
-					swapoff --verbose "$PART" 2>&1 && \
+			} | pb
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	swapoff)
+		if (confirm "Deactivate swap on $PART?"); then
+			log "deactivating swap on $PART"
+			{
+				swapoff --verbose "$PART" 2>&1 &&
 					echo "Swap deactivated on $PART"
-				} | pb
+			} | pb
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	chtype)
+		PN=$(partition_number "$PART")
+		if [ -n "$PN" ]; then
+			PTTYPE=$(partition_table_type "$DISK")
+			PARTITION_TYPES=$(partition_types "$PTTYPE")
+			if [ -z "$PARTITION_TYPES" ]; then
+				msg "An error occurred. Probably partition table type '$PTTYPE' is not supported."
+				partition_options -p "$PART" -d "$DISK" -s "$OPT"
 			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		chtype)
-			PN=$(partition_number "$PART")
-			if [ -n "$PN" ]; then
-				PTTYPE=$(partition_table_type "$DISK")
-				PARTITION_TYPES=$(partition_types "$PTTYPE")
-				if [ -z "$PARTITION_TYPES" ]; then
-					msg "An error occurred. Probably partition table type '$PTTYPE' is not supported."
-					partition_options -p "$PART" -d "$DISK" -s "$OPT"
-				fi
-				PT_CHOICE=$(echo "$PARTITION_TYPES" | dlg --scrollbar --no-tags --cancel-label "Back" --title "Change partition $PART type" --menu "")
-				exitstatus=$?
-				if [ $exitstatus -ne 0 ]; then
-					partition_options -p "$PART" -d "$DISK" -s "$OPT"
-				fi
-				PT_CHOICE_DEC=$(decode_partition "$PT_CHOICE")
-				if (confirm "Change partition $PART ($PN) on disk $DISK to type $PT_CHOICE_DEC?"); then
-					log "changing partition $PART ($PN) on disk $DISK to type $PT_CHOICE_DEC ($PT_CHOICE)"
-					sfdisk --part-type "$DISK" "$PN" "$PT_CHOICE" 2>&1 | pb
-				fi
-			else
-				msg "An error occurred while trying to determine partition type of $PART on disk $DISK"
-			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		del)
-			PN=$(partition_number "$PART")
-			if [ -n "$PN" ]; then
-				if (confirm "Delete partition $PART ($PN) on disk $DISK?"); then
-					log "deleting $PART ($PN) on disk $DISK"
-					sfdisk --delete "$DISK" "$PN" 2>&1 | pb
-					part -d "$DISK"
-				fi
-			else
-				msg "An error occurred while trying to determine partition type of $PART on disk $DISK"
-			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		mount)
-			if [ -n "$CMP" ]; then
-				msg "$PART already mounted at $CMP"
-			else
-				DEFAULT_MP=
-				if [ "$(partition_type "$PART")" = "$EFI_UUID" ]; then
-					DEFAULT_MP=/efi
-				fi
-				MP="$(echo "$DEFAULT_MP" | sdlg --cancel-label "Back" --title "Mount Point (relative to $MNT) for $PART" --inputbox "Leave empty for '/'")"
-				exitstatus=$?
-				if [ $exitstatus -eq 0 ]; then
-					MP="$(trim "$MP")"
-					MP="${MP%% *}"
-					if (confirm "Mount $PART on $MNT$MP?"); then
-						log "mounting $PART on $MNT$MP"
-						{
-							[ ! -d "$MNT$MP" ] && mkdir --parents --verbose "$MNT$MP" 2>&1
-							mount --verbose "$PART" "$MNT$MP" 2>&1
-						} | pb
-					fi
-				fi
-			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		unmount)
-			if [ -z "$CMP" ]; then
-				msg "$PART is not mounted"
-			else
-				if (confirm "Unmount $PART mounted on $CMP?"); then
-					log "unmounting $PART mounted on $CMP"
-					umount --verbose "$CMP" 2>&1 | pb
-				fi
-			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		enc)
-			PARENTS="$(parent_devices "$PART")"
-			for p in $PARENTS; do
-				if [ "$(block_type "$p")" = "crypt" ]; then
-					msg "$p is already a cryptdevice, nesting them is not supported"
-					partition_options -p "$PART" -d "$DISK" -s "$OPT"
-					break
-				fi
-			done
-			PASS=$(passwordbox "Set Passphrase" "Encrypt $PART (all data will be lost)")
+			PT_CHOICE=$(echo "$PARTITION_TYPES" | dlg --scrollbar --no-tags --cancel-label "Back" --title "Change partition $PART type" --menu "")
 			exitstatus=$?
 			if [ $exitstatus -ne 0 ]; then
 				partition_options -p "$PART" -d "$DISK" -s "$OPT"
 			fi
-			CONF=$(passwordbox "Confirm Passphrase" "Encrypt $PART (all data will be lost)")
+			PT_CHOICE_DEC=$(decode_partition "$PT_CHOICE")
+			if (confirm "Change partition $PART ($PN) on disk $DISK to type $PT_CHOICE_DEC?"); then
+				log "changing partition $PART ($PN) on disk $DISK to type $PT_CHOICE_DEC ($PT_CHOICE)"
+				sfdisk --part-type "$DISK" "$PN" "$PT_CHOICE" 2>&1 | pb
+			fi
+		else
+			msg "An error occurred while trying to determine partition type of $PART on disk $DISK"
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	del)
+		PN=$(partition_number "$PART")
+		if [ -n "$PN" ]; then
+			if (confirm "Delete partition $PART ($PN) on disk $DISK?"); then
+				log "deleting $PART ($PN) on disk $DISK"
+				sfdisk --delete "$DISK" "$PN" 2>&1 | pb
+				part -d "$DISK"
+			fi
+		else
+			msg "An error occurred while trying to determine partition type of $PART on disk $DISK"
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	mount)
+		if [ -n "$CMP" ]; then
+			msg "$PART already mounted at $CMP"
+		else
+			DEFAULT_MP=
+			if [ "$(partition_type "$PART")" = "$EFI_UUID" ]; then
+				DEFAULT_MP=/efi
+			fi
+			MP="$(echo "$DEFAULT_MP" | sdlg --cancel-label "Back" --title "Mount Point (relative to $MNT) for $PART" --inputbox "Leave empty for '/'")"
 			exitstatus=$?
-			if [ $exitstatus -ne 0 ]; then
-				partition_options -p "$PART" -d "$DISK" -s "$OPT"
-			fi
-			if [ -z "$CONF" ] || [ -z "$PASS" ]; then
-				msg "Confirm the passphrase"
-				partition_options -p "$PART" -d "$DISK" -s "$OPT"
-			fi
-			if [ "$PASS" != "$CONF" ]; then
-				msg "Passphrase does not match"
-				partition_options -p "$PART" -d "$DISK" -s "$OPT"
-			fi
-			{
-				echo "encrypting $PART..."
-				printf "%s" "$CONF" | cryptsetup --verbose luksFormat "$PART" -d - 2>&1
-			} | pb
-			unset PASS CONF
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		open)
-			DEC_PASS="$(passwordbox "Enter Passphrase" "Decrypt $PART")"
-			exitstatus=$?
-			if [ $exitstatus -ne 0 ]; then
-				partition_options -p "$PART" -d "$DISK" -s "$OPT"
-			fi
-			{
-				echo "decrypting $PART as $CRYPT_NAME..."
-				printf "%s" "$DEC_PASS" | cryptsetup --verbose open "$PART" "$CRYPT_NAME" 2>&1
-			} | pb
-			unset DEC_PASS
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		close)
-			{
-				echo "closing $CRYPT_NAME ($PART)..."
-				cryptsetup --verbose close "$CRYPT_NAME" 2>&1
-			} | pb
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		pvcreate)
-			PARENTS="$(parent_devices "$PART")"
-			for p in $PARENTS; do
-				if [ "$(block_type "$p")" = "lvm" ]; then
-					msg "$p is already an LVM member, nesting them is not supported"
-					partition_options -p "$PART" -d "$DISK" -s "$OPT"
-					break
+			if [ $exitstatus -eq 0 ]; then
+				MP="$(trim "$MP")"
+				MP="${MP%% *}"
+				if (confirm "Mount $PART on $MNT$MP?"); then
+					log "mounting $PART on $MNT$MP"
+					{
+						[ ! -d "$MNT$MP" ] && mkdir --parents --verbose "$MNT$MP" 2>&1
+						mount --verbose "$PART" "$MNT$MP" 2>&1
+					} | pb
 				fi
-			done
-			if (confirm "Create a new Physical Volume in $PART?"); then
-				pvcreate --verbose --yes "$PART" 2>&1 | pb
 			fi
-			partition_options -p "$PART" -d "$DISK" -s "$OPT";;
-		*)
-			partition_options -p "$PART" -d "$DISK";;
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	unmount)
+		if [ -z "$CMP" ]; then
+			msg "$PART is not mounted"
+		else
+			if (confirm "Unmount $PART mounted on $CMP?"); then
+				log "unmounting $PART mounted on $CMP"
+				umount --verbose "$CMP" 2>&1 | pb
+			fi
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	enc)
+		PARENTS="$(parent_devices "$PART")"
+		for p in $PARENTS; do
+			if [ "$(block_type "$p")" = "crypt" ]; then
+				msg "$p is already a cryptdevice, nesting them is not supported"
+				partition_options -p "$PART" -d "$DISK" -s "$OPT"
+				break
+			fi
+		done
+		PASS=$(passwordbox "Set Passphrase" "Encrypt $PART (all data will be lost)")
+		exitstatus=$?
+		if [ $exitstatus -ne 0 ]; then
+			partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		fi
+		CONF=$(passwordbox "Confirm Passphrase" "Encrypt $PART (all data will be lost)")
+		exitstatus=$?
+		if [ $exitstatus -ne 0 ]; then
+			partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		fi
+		if [ -z "$CONF" ] || [ -z "$PASS" ]; then
+			msg "Confirm the passphrase"
+			partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		fi
+		if [ "$PASS" != "$CONF" ]; then
+			msg "Passphrase does not match"
+			partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		fi
+		{
+			echo "encrypting $PART..."
+			printf "%s" "$CONF" | cryptsetup --verbose luksFormat "$PART" -d - 2>&1
+		} | pb
+		unset PASS CONF
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	open)
+		DEC_PASS="$(passwordbox "Enter Passphrase" "Decrypt $PART")"
+		exitstatus=$?
+		if [ $exitstatus -ne 0 ]; then
+			partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		fi
+		{
+			echo "decrypting $PART as $CRYPT_NAME..."
+			printf "%s" "$DEC_PASS" | cryptsetup --verbose open "$PART" "$CRYPT_NAME" 2>&1
+		} | pb
+		unset DEC_PASS
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	close)
+		{
+			echo "closing $CRYPT_NAME ($PART)..."
+			cryptsetup --verbose close "$CRYPT_NAME" 2>&1
+		} | pb
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	pvcreate)
+		PARENTS="$(parent_devices "$PART")"
+		for p in $PARENTS; do
+			if [ "$(block_type "$p")" = "lvm" ]; then
+				msg "$p is already an LVM member, nesting them is not supported"
+				partition_options -p "$PART" -d "$DISK" -s "$OPT"
+				break
+			fi
+		done
+		if (confirm "Create a new Physical Volume in $PART?"); then
+			pvcreate --verbose --yes "$PART" 2>&1 | pb
+		fi
+		partition_options -p "$PART" -d "$DISK" -s "$OPT"
+		;;
+	*)
+		partition_options -p "$PART" -d "$DISK"
+		;;
 	esac
 }
 
-packs () {
+packs() {
 	SELECTED="${1-presets}"
 	CUSTOM_COUNT=$(packs_count "$TMP_CUSTOM_PACKS")
 	PACKS_MENU=
@@ -1360,28 +1401,31 @@ packs () {
 		main packs
 	fi
 	case $CHOICE in
-		presets)
-			presets;;
-		custom)
-			[ ! -f "$TMP_CUSTOM_PACKS" ] && touch "$TMP_CUSTOM_PACKS"
-			PACKS=$(editbox "$TMP_CUSTOM_PACKS" "Custom Packages (installed from the internet)")
-			exitstatus=$?
-			if [ $exitstatus -eq 0 ]; then
-				rm --force "$TMP_CUSTOM_PACKS"
-				for p in $PACKS; do
-					echo "$p" >> "$TMP_CUSTOM_PACKS"
-				done
-			fi
-			packs custom;;
-		*)
-			packs;;
+	presets)
+		presets
+		;;
+	custom)
+		[ ! -f "$TMP_CUSTOM_PACKS" ] && touch "$TMP_CUSTOM_PACKS"
+		PACKS=$(editbox "$TMP_CUSTOM_PACKS" "Custom Packages (installed from the internet)")
+		exitstatus=$?
+		if [ $exitstatus -eq 0 ]; then
+			rm --force "$TMP_CUSTOM_PACKS"
+			for p in $PACKS; do
+				echo "$p" >>"$TMP_CUSTOM_PACKS"
+			done
+		fi
+		packs custom
+		;;
+	*)
+		packs
+		;;
 	esac
 	packs
 }
 
-is_selected_preset_pack () {
+is_selected_preset_pack() {
 	if [ -f "${TMP_PRESET}_$2" ]; then
-		if (grep --regexp "^${1}$" "${TMP_PRESET}_$2" > /dev/null 2>&1); then
+		if (grep --regexp "^${1}$" "${TMP_PRESET}_$2" >/dev/null 2>&1); then
 			echo ON
 		else
 			echo OFF
@@ -1391,16 +1435,16 @@ is_selected_preset_pack () {
 	fi
 }
 
-is_selected () {
+is_selected() {
 	for f in "$TMP_PRESET"*; do
-		if (grep --regexp "^${1}$" "$f" > /dev/null 2>&1); then
+		if (grep --regexp "^${1}$" "$f" >/dev/null 2>&1); then
 			exit 0
 		fi
 	done
 	exit 1
 }
 
-packs_count () {
+packs_count() {
 	if [ -f "$1" ]; then
 		wc --lines "$1" | awk '{print $1}'
 	else
@@ -1408,11 +1452,11 @@ packs_count () {
 	fi
 }
 
-select_preset () {
+select_preset() {
 	PACKS_LIST=
 	while IFS= read -r p; do
 		PACKS_LIST="$PACKS_LIST $p $p $(is_selected_preset_pack "$p" "$1")"
-	done < "$PRESETS_DIR/$1"
+	done <"$PRESETS_DIR/$1"
 	if [ -z "$PACKS_LIST" ]; then
 		msg "No package found for preset $1"
 		packs presets
@@ -1422,13 +1466,13 @@ select_preset () {
 	if [ $exitstatus -eq 0 ]; then
 		rm --force "${TMP_PRESET}_$1"
 		for p in $PACKS_CHOICE; do
-			echo "$p" >> "${TMP_PRESET}_$1"
+			echo "$p" >>"${TMP_PRESET}_$1"
 		done
 	fi
 	presets "$1"
 }
 
-presets () {
+presets() {
 	DEFAULT="${1-}"
 	PRESETS=
 	if [ "$(find "$PRESETS_DIR" -type f | wc --lines)" -eq 0 ]; then
@@ -1459,7 +1503,7 @@ presets () {
 	fi
 }
 
-user_pwd () {
+user_pwd() {
 	if [ -z "$1" ]; then
 		msg "Unknown user"
 		users_menu
@@ -1486,23 +1530,23 @@ user_pwd () {
 	else
 		ENC_PASSWD="!"
 	fi
-	if (grep --regexp "^${1}:" "$TMP_USERS" > /dev/null 2>&1); then
+	if (grep --regexp "^${1}:" "$TMP_USERS" >/dev/null 2>&1); then
 		sed --in-place "s|^${1}:[^ ]*|${1}:${ENC_PASSWD}|g" "$TMP_USERS"
 	else
-		echo "${1}:${ENC_PASSWD}" >> "$TMP_USERS"
+		echo "${1}:${ENC_PASSWD}" >>"$TMP_USERS"
 	fi
 	unset PASS CONF ENC_PASSWD
 }
 
-pwd_missing () {
+pwd_missing() {
 	if [ -f "$TMP_USERS" ]; then
-		grep --regexp "^${1}:\!$" "$TMP_USERS" > /dev/null 2>&1
+		grep --regexp "^${1}:\!$" "$TMP_USERS" >/dev/null 2>&1
 	else
 		exit 0
 	fi
 }
 
-sel_shell () {
+sel_shell() {
 	if [ "$1" = "$2" ]; then
 		echo ON
 	else
@@ -1510,36 +1554,36 @@ sel_shell () {
 	fi
 }
 
-zsh_needed () {
+zsh_needed() {
 	for f in "${TMP_USER}_"*"_shell"; do
-		if (grep zsh "$f" > /dev/null 2>&1); then
+		if (grep zsh "$f" >/dev/null 2>&1); then
 			exit 0
 		fi
 	done
 	exit 1
 }
 
-doas_needed () {
+doas_needed() {
 	for f in "${TMP_USER}_"*"_wheel"; do
 		exit 0
 	done
 	exit 1
 }
 
-user_shell () {
+user_shell() {
 	if [ -z "$1" ]; then
 		msg "Unknown user"
 		users_menu
 	fi
-	SEL_SHELL="$(basename "$(cat "${TMP_USER}_${1}_shell" 2> /dev/null)" 2> /dev/null)"
+	SEL_SHELL="$(basename "$(cat "${TMP_USER}_${1}_shell" 2>/dev/null)" 2>/dev/null)"
 	USER_SHELL="bash \"Bourne-Again SHell (bash) (default)\" $(sel_shell "bash" "$SEL_SHELL")
 		zsh \"Z SHell (zsh)\" $(sel_shell "zsh" "$SEL_SHELL")"
 	SHELL_CHOICE=$(echo "$USER_SHELL" | dlg --no-tags --no-cancel --title "User $1 shell" --default-item "$SEL_SHELL" --radiolist "")
 	[ -z "$SHELL_CHOICE" ] && SHELL_CHOICE="bash"
-	printf "/bin/%s" "$SHELL_CHOICE" > "${TMP_USER}_${1}_shell"
+	printf "/bin/%s" "$SHELL_CHOICE" >"${TMP_USER}_${1}_shell"
 }
 
-user_wheel () {
+user_wheel() {
 	if [ -z "$1" ]; then
 		msg "Unknown user"
 		users_menu
@@ -1555,7 +1599,7 @@ user_wheel () {
 	fi
 }
 
-user_autologin () {
+user_autologin() {
 	if [ -z "$1" ]; then
 		msg "Unknown user"
 		users_menu
@@ -1564,11 +1608,11 @@ user_autologin () {
 		msg "It's not a good idea to set the root user to autologin"
 		users_menu
 	fi
-	CURR_AUTO="$(cat "$TMP_AUTOLOGIN" 2> /dev/null)"
+	CURR_AUTO="$(cat "$TMP_AUTOLOGIN" 2>/dev/null)"
 	if [ -f "$TMP_AUTOLOGIN" ] && [ -n "$CURR_AUTO" ]; then
 		if [ "$CURR_AUTO" != "$1" ]; then
 			if (confirm "User $CURR_AUTO is set to autologin on TTY1. Substitute it with $1?"); then
-				printf "%s" "$1" > "$TMP_AUTOLOGIN"
+				printf "%s" "$1" >"$TMP_AUTOLOGIN"
 			fi
 		else
 			if (confirm "User $1 is already set to autologin. Remove the setting?"); then
@@ -1577,22 +1621,22 @@ user_autologin () {
 		fi
 	else
 		if (confirm "Set user $1 to autologin on TTY1?"); then
-			printf "%s" "$1" > "$TMP_AUTOLOGIN"
+			printf "%s" "$1" >"$TMP_AUTOLOGIN"
 		fi
 	fi
 }
 
-user () {
+user() {
 	if [ -z "$1" ]; then
 		msg "Unknown user"
 		users_menu
 	fi
 	(pwd_missing "$1") && PWD_MISSING=" (!)" || PWD_MISSING=
-	CURR_SHELL="$(basename "$(cat "${TMP_USER}_${1}_shell" 2> /dev/null)" 2> /dev/null)"
+	CURR_SHELL="$(basename "$(cat "${TMP_USER}_${1}_shell" 2>/dev/null)" 2>/dev/null)"
 	IS_WHEEL="N"
 	[ -f "${TMP_USER}_${1}_wheel" ] && IS_WHEEL="Y"
 	IS_AUTO="N"
-	CURR_AUTO="$(cat "$TMP_AUTOLOGIN" 2> /dev/null)"
+	CURR_AUTO="$(cat "$TMP_AUTOLOGIN" 2>/dev/null)"
 	[ "$CURR_AUTO" = "$1" ] && IS_AUTO="Y"
 	USER_MENU="pwd \"Set Password${PWD_MISSING}\"
 		shell \"Shell ($CURR_SHELL)\"
@@ -1604,26 +1648,31 @@ user () {
 		users_menu
 	fi
 	case $CHOICE in
-		pwd)
-			user_pwd "$1"
-			user "$1";;
-		shell)
-			user_shell "$1"
-			user "$1";;
-		wheel)
-			user_wheel "$1"
-			user "$1";;
-		autologin)
-			user_autologin "$1"
-			user "$1";;
-		*)
-			users_menu;;
+	pwd)
+		user_pwd "$1"
+		user "$1"
+		;;
+	shell)
+		user_shell "$1"
+		user "$1"
+		;;
+	wheel)
+		user_wheel "$1"
+		user "$1"
+		;;
+	autologin)
+		user_autologin "$1"
+		user "$1"
+		;;
+	*)
+		users_menu
+		;;
 	esac
 }
 
-users_menu () {
+users_menu() {
 	if [ ! -f "$TMP_USERS" ]; then
-		echo "root:!" > "$TMP_USERS"
+		echo "root:!" >"$TMP_USERS"
 	fi
 	USERS=
 	while IFS= read -r u; do
@@ -1637,7 +1686,7 @@ users_menu () {
 			fi
 			USERS="$USERS $usr \"$usr_des\""
 		fi
-	done < "$TMP_USERS"
+	done <"$TMP_USERS"
 	USERS="$USERS new_user +User"
 	CHOICE="$(echo "$USERS" | dlg --no-tags --cancel-label "Back" --title "Users" --menu "")"
 	exitstatus=$?
@@ -1657,7 +1706,7 @@ users_menu () {
 	main users
 }
 
-new_user () {
+new_user() {
 	USR="$(echo "" | sdlg --cancel-label "Back" --title "New User" --inputbox "")"
 	exitstatus=$?
 	if [ $exitstatus -eq 0 ]; then
@@ -1684,19 +1733,18 @@ new_user () {
 	users_menu
 }
 
-start_install () {
+start_install() {
 	PACKS=
 	for f in "$TMP_PRESET"*; do
-		PACKS="$PACKS $(cat "$f" 2> /dev/null)"
+		PACKS="$PACKS $(cat "$f" 2>/dev/null)"
 	done
 	PACKS="$(echo "$PACKS" | sed 's/linux-lts//g')"
-	CUSTOM_PACKS="$(cat "$TMP_CUSTOM_PACKS" 2> /dev/null)"
+	CUSTOM_PACKS="$(cat "$TMP_CUSTOM_PACKS" 2>/dev/null)"
 	KERNELS="linux-lts"
-	KEYMAP="$(cat $TMP_KEYMAP 2> /dev/null)"
-	COMPOSE="$(cat $TMP_COMPOSE 2> /dev/null)"
-	TIMEZONE="$(cat $TMP_TZ 2> /dev/null)"
-	LANGUAGE="$(cat $TMP_LANG 2> /dev/null)"
-	HOSTNAME="$(cat $TMP_HOSTNAME 2> /dev/null)"
+	KEYMAP="$(cat $TMP_KEYMAP 2>/dev/null)"
+	TIMEZONE="$(cat $TMP_TZ 2>/dev/null)"
+	LANGUAGE="$(cat $TMP_LANG 2>/dev/null)"
+	HOSTNAME="$(cat $TMP_HOSTNAME 2>/dev/null)"
 	METHOD="$(method)"
 	MP_ESP=
 	MODE=BIOS
@@ -1712,7 +1760,6 @@ start_install () {
 		msg "Keymap not set"
 		settings
 	fi
-	[ -z "$COMPOSE" ] && log "Compose key not set"
 	if [ -z "$HOSTNAME" ]; then
 		msg "Hostname not set"
 		settings
@@ -1727,7 +1774,7 @@ start_install () {
 	if ! (is_selected neovim); then
 		PACKS="$PACKS neovim"
 	fi
-	if ! (mountpoint "$MNT" > /dev/null 2>&1); then
+	if ! (mountpoint "$MNT" >/dev/null 2>&1); then
 		msg "$MNT is not a mountpoint"
 		main disk
 	fi
@@ -1736,43 +1783,38 @@ start_install () {
 		users_menu
 	fi
 	if [ "$VIRTUALIZATION" != none ]; then
-		if ! (is_selected xf86-video-vmware); then
-			PACKS="$PACKS xf86-video-vmware"
-		fi
 		case $VIRTUALIZATION in
-			qemu|kvm)
-				if ! (is_selected qemu-guest-agent); then
-					PACKS="$PACKS qemu-guest-agent"
-				fi
-				;;
-			vmware)
-				if ! (is_selected open-vm-tools); then
-					PACKS="$PACKS open-vm-tools"
-				fi
-				;;
-			*)
-				msg "Virtualization technology '$VIRTUALIZATION' not supported yet. System might not function smoothly";;
+		qemu | kvm)
+			if ! (is_selected qemu-guest-agent); then
+				PACKS="$PACKS qemu-guest-agent"
+			fi
+			;;
+		vmware)
+			if ! (is_selected open-vm-tools); then
+				PACKS="$PACKS open-vm-tools"
+			fi
+			;;
+		*)
+			msg "Virtualization technology '$VIRTUALIZATION' not supported yet. System might not function smoothly"
+			;;
 		esac
 	else
 		if ! (is_selected linux-firmware); then
 			PACKS="$PACKS linux-firmware"
 		fi
-		if ! (is_selected xorg-drivers); then
-			PACKS="$PACKS xorg-drivers"
-		fi
-		case $(lscpu 2> /dev/null | grep "Vendor ID:" | awk '{print $3}') in
-			AuthenticAMD|AMDisbetter!)
-				MC_PATH=amd-ucode.img
-				if ! (is_selected amd-ucode); then
-					PACKS="$PACKS amd-ucode"
-				fi
-				;;
-			GenuineIntel)
-				MC_PATH=intel-ucode.img
-				if ! (is_selected intel-ucode); then
-					PACKS="$PACKS intel-ucode"
-				fi
-				;;
+		case $(lscpu 2>/dev/null | grep "Vendor ID:" | awk '{print $3}') in
+		AuthenticAMD | AMDisbetter!)
+			MC_PATH=amd-ucode.img
+			if ! (is_selected amd-ucode); then
+				PACKS="$PACKS amd-ucode"
+			fi
+			;;
+		GenuineIntel)
+			MC_PATH=intel-ucode.img
+			if ! (is_selected intel-ucode); then
+				PACKS="$PACKS intel-ucode"
+			fi
+			;;
 		esac
 	fi
 	if (lvm_needed) && ! (is_selected lvm2); then
@@ -1812,7 +1854,7 @@ start_install () {
 			main disk
 		fi
 		MP_ESP=$(mount_point "$ESP")
-		if ! (mountpoint "$MP_ESP" > /dev/null 2>&1); then
+		if ! (mountpoint "$MP_ESP" >/dev/null 2>&1); then
 			msg "$MP_ESP is not a mountpoint"
 			main disk
 		fi
@@ -1844,12 +1886,12 @@ start_install () {
 		fi
 	fi
 	CMDLINE="$(kernel_cmdline)"
-	if (confirm "Lang: $LANGUAGE\nKeymap: $KEYMAP\nCompose Key: $COMPOSE\nHostname: $HOSTNAME\nTimezone: $TIMEZONE\nKernel Command Line: $CMDLINE\nHooks: $HOOKS\nMethod: $METHOD\nBoot Mode: $MODE"); then
+	if (confirm "Lang: $LANGUAGE\nKeymap: $KEYMAP\nHostname: $HOSTNAME\nTimezone: $TIMEZONE\nKernel Command Line: $CMDLINE\nHooks: $HOOKS\nMethod: $METHOD\nBoot Mode: $MODE"); then
 		log "installing..."
 		{
 			mkdir --parents --verbose "$MNT/etc/kernel" "$MNT/etc/mkinitcpio.conf.d" "$MNT/usr/share/mkinitcpio" "$MNT/etc/pacman.d" 2>&1
-			printf "%s" "$CMDLINE" > "$MNT/etc/kernel/cmdline" 2>&1
-			echo "HOOKS=($HOOKS)" > "$MNT/etc/mkinitcpio.conf.d/hooks.conf" 2>&1
+			printf "%s" "$CMDLINE" >"$MNT/etc/kernel/cmdline" 2>&1
+			echo "HOOKS=($HOOKS)" >"$MNT/etc/mkinitcpio.conf.d/hooks.conf" 2>&1
 			{
 				echo "# mkinitcpio preset file for the '%PKGBASE%' package"
 				echo "ALL_kver=\"/boot/vmlinuz-%PKGBASE%\""
@@ -1861,13 +1903,13 @@ start_install () {
 				else
 					echo "default_image=\"/boot/initramfs-%PKGBASE%.img\""
 				fi
-			} > "$MNT/etc/hook.preset" 2>&1
+			} >"$MNT/etc/hook.preset" 2>&1
 			{
 				echo "NoUpgrade = usr/share/mkinitcpio/hook.preset"
 				echo "Color"
 				echo "ILoveCandy"
 				echo "VerbosePkgLists"
-			} > "$MNT/etc/pacman.d/custom" 2>&1
+			} >"$MNT/etc/pacman.d/custom" 2>&1
 			if [ -n "$PACKS" ]; then
 				echo "the following packages will be installed (unless already installed):"
 				echo "$PACKS"
@@ -1906,7 +1948,7 @@ start_install () {
 			echo "synchronizing system clock"
 			timedatectl set-ntp true 2>&1
 			echo "generating fstab"
-			genfstab -U "$MNT" > "$MNT/etc/fstab" 2>&1
+			genfstab -U "$MNT" >"$MNT/etc/fstab" 2>&1
 			echo "setting timezone"
 			arch-chroot "$MNT" ln --symbolic --force --verbose "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime 2>&1
 			echo "synchronizing hardware clock"
@@ -1915,18 +1957,16 @@ start_install () {
 			cp --verbose $TMP_LOCALEGEN "$MNT/etc/locale.gen" 2>&1
 			echo "generating locales"
 			arch-chroot "$MNT" locale-gen 2>&1
-			printf "LANG=%s" "$LANGUAGE" > "$MNT/etc/locale.conf" 2>&1
+			printf "LANG=%s" "$LANGUAGE" >"$MNT/etc/locale.conf" 2>&1
 			echo "setting keymap $KEYMAP"
-			mkdir --parents --verbose "$MNT/etc/X11/xorg.conf.d" 2>&1
-			printf "KEYMAP=%s" "$KEYMAP" > "$MNT/etc/vconsole.conf" 2>&1
-			printf "Section \"InputClass\"\n\tIdentifier \"system-keyboard\"\n\tMatchIsKeyboard \"on\"\n\tOption \"XkbLayout\" \"%s\"\n\tOption \"XkbOptions\" \"%s\"\nEndSection" "$KEYMAP" "$COMPOSE" > "$MNT/etc/X11/xorg.conf.d/00-keyboard.conf" 2>&1
+			printf "KEYMAP=%s" "$KEYMAP" >"$MNT/etc/vconsole.conf" 2>&1
 			echo "setting hostname"
-			printf "%s" "$HOSTNAME" > "$MNT/etc/hostname" 2>&1
-			printf "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t%s\n" "$HOSTNAME" > "$MNT/etc/hosts" 2>&1
+			printf "%s" "$HOSTNAME" >"$MNT/etc/hostname" 2>&1
+			printf "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t%s\n" "$HOSTNAME" >"$MNT/etc/hosts" 2>&1
 			if (is_installed opendoas); then
 				echo "enabling wheel group"
-				printf "permit persist :wheel\n" > "$MNT/etc/doas.conf" 2>&1
-				printf "permit keepenv nopass :wheel\n" > "$MNT/etc/doas.conf" 2>&1
+				printf "permit persist :wheel\n" >"$MNT/etc/doas.conf" 2>&1
+				printf "permit keepenv nopass :wheel\n" >"$MNT/etc/doas.conf" 2>&1
 				chown --verbose root:root "$MNT/etc/doas.conf" 2>&1
 				chmod --verbose 0600 "$MNT/etc/doas.conf" 2>&1
 			fi
@@ -1949,7 +1989,7 @@ start_install () {
 			fi
 			echo "enabling numlock on TTY"
 			mkdir --parents --verbose "$MNT/etc/systemd/system/getty@.service.d" 2>&1
-			printf "[Service]\nExecStartPre=/bin/sh -c 'setleds -D +num < /dev/%%I'\n" > "$MNT/etc/systemd/system/getty@.service.d/numlock.conf" 2>&1
+			printf "[Service]\nExecStartPre=/bin/sh -c 'setleds -D +num < /dev/%%I'\n" >"$MNT/etc/systemd/system/getty@.service.d/numlock.conf" 2>&1
 			if [ -f "$MNT/usr/lib/systemd/system/qemu-guest-agent.service" ]; then
 				echo "enabling qemu guest agent"
 				arch-chroot "$MNT" systemctl enable qemu-guest-agent 2>&1
@@ -1967,19 +2007,19 @@ start_install () {
 				arch-chroot "$MNT" ln --symbolic --force --verbose /dev/null /etc/tmpfiles.d/linux-firmware.conf 2>&1
 			fi
 			echo "disabling annoying and useless beep"
-			printf "blacklist pcspkr\n" > "$MNT/etc/modprobe.d/nobeep.conf" 2>&1
+			printf "blacklist pcspkr\n" >"$MNT/etc/modprobe.d/nobeep.conf" 2>&1
 			echo "setting a sane systemd service stop timeout"
 			mkdir --parents --verbose "$MNT/etc/systemd/system.conf.d" 2>&1
-			printf "[Manager]\nDefaultTimeoutStopSec=10s\n" > "$MNT/etc/systemd/system.conf.d/system.conf" 2>&1
+			printf "[Manager]\nDefaultTimeoutStopSec=10s\n" >"$MNT/etc/systemd/system.conf.d/system.conf" 2>&1
 			echo "setting a sane max journald log size"
 			mkdir --parents --verbose "$MNT/etc/systemd/journald.conf.d" 2>&1
-			printf "[Journal]\nSystemMaxUse=500M\n" > "$MNT/etc/systemd/journald.conf.d/journal.conf" 2>&1
+			printf "[Journal]\nSystemMaxUse=500M\n" >"$MNT/etc/systemd/journald.conf.d/journal.conf" 2>&1
 			echo "creating users..."
 			while IFS= read -r u; do
 				usr="${u%:*}"
 				if [ -n "$usr" ] && [ "$usr" != root ]; then
 					echo "creating user $usr"
-					shell="$(cat "${TMP_USER}_${usr}_shell" 2> /dev/null)"
+					shell="$(cat "${TMP_USER}_${usr}_shell" 2>/dev/null)"
 					if [ -z "$shell" ]; then
 						shell=/bin/bash
 					fi
@@ -1989,19 +2029,19 @@ start_install () {
 						gpasswd --root "$MNT" --add "$usr" wheel 2>&1
 					fi
 				fi
-			done < "$TMP_USERS"
+			done <"$TMP_USERS"
 			echo "setting passwords..."
-			tmp_users="$(cat "$TMP_USERS" 2> /dev/null)"
+			tmp_users="$(cat "$TMP_USERS" 2>/dev/null)"
 			echo "$tmp_users" | chpasswd --root "$MNT" --encrypted 2>&1
-			USER_AUTO="$(cat "$TMP_AUTOLOGIN" 2> /dev/null)"
+			USER_AUTO="$(cat "$TMP_AUTOLOGIN" 2>/dev/null)"
 			if [ -f "$TMP_AUTOLOGIN" ] && [ -n "$USER_AUTO" ] && [ "$USER_AUTO" != root ]; then
 				echo "setting user $USER_AUTO to autologin on TTY1"
 				mkdir --parents --verbose "$MNT/etc/systemd/system/getty@tty1.service.d" 2>&1
-				printf "[Service]\nExecStart=\nExecStart=-/usr/bin/agetty --autologin %s --noclear %%I \$TERM\nTTYVTDisallocate=no\n" "$USER_AUTO" > "$MNT/etc/systemd/system/getty@tty1.service.d/override.conf" 2>&1
+				printf "[Service]\nExecStart=\nExecStart=-/usr/bin/agetty --autologin %s --noclear %%I \$TERM\nTTYVTDisallocate=no\n" "$USER_AUTO" >"$MNT/etc/systemd/system/getty@tty1.service.d/override.conf" 2>&1
 			fi
 			if [ "$MODE" = UEFI ]; then
 				echo "UKI setup"
-				if ! (efibootmgr --verbose | grep --fixed-strings "\EFI\Linux\arch-$KERNELS.efi" > /dev/null 2>&1); then
+				if ! (efibootmgr --verbose | grep --fixed-strings "\EFI\Linux\arch-$KERNELS.efi" >/dev/null 2>&1); then
 					if [ -f "$MP_ESP/EFI/Linux/arch-$KERNELS.efi" ]; then
 						ESP_DISK="$(partition_disk "$ESP")"
 						ESP_NUMBER="$(partition_number "$ESP")"
@@ -2034,14 +2074,14 @@ start_install () {
 	main install
 }
 
-quit () {
+quit() {
 	ACTION="${1-quit}"
 	if (confirm "Do you want to $ACTION?"); then
 		LOGFILE="installer-$(dt).log"
 		log "quitting installer"
 		log "#################################################################"
 		cp "$LOG" "/tmp/$LOGFILE"
-		cp "/tmp/$LOGFILE" "$MNT/root/$LOGFILE" 2> /dev/null
+		cp "/tmp/$LOGFILE" "$MNT/root/$LOGFILE" 2>/dev/null
 		if [ "$ACTION" = reboot ]; then
 			reboot
 		fi
@@ -2051,9 +2091,9 @@ quit () {
 	main
 }
 
-start () {
+start() {
 	trap quit INT
-	echo > "$LOG"
+	echo >"$LOG"
 	default_method
 	log "#################################################################"
 	log "starting installer"

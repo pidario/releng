@@ -42,7 +42,6 @@ system-config-printer
 telegram-desktop
 texstudio
 xdg-desktop-portal-hyprland
-xorg-drivers
 xournalpp
 yt-dlp
 wireshark-qt
@@ -73,7 +72,6 @@ davmail
 hplip-plugin
 redshift-minimal
 szyszka-bin
-xf86-video-vmware
 ############################## FLATPAK ##############################
 com.github.KRTirtho.Spotube
 com.usebottles.bottles
