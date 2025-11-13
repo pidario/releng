@@ -10,7 +10,6 @@ imagemagick
 keepassxc
 kvantum
 kvantum-qt5
-mako
 meld
 network-manager-applet
 niri
@@ -28,6 +27,7 @@ qt6-5compat
 qt6-wayland
 remmina
 swayidle
+swaync
 thunar
 ttf-nerd-fonts-symbols-mono
 waybar
