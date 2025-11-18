@@ -211,28 +211,26 @@ parent_devices() {
 
 kernel_cmdline() {
 	CMD=
+	CD=
 	BD="$(mp_block_device "$MNT/")"
 	BD_TYPE="$(block_type "$BD")"
 	if [ "$BD_TYPE" = part ]; then
 		CMD="root=UUID=$(uuid "$BD")"
 	elif [ "$BD_TYPE" = lvm ]; then
 		CMD="root=$BD"
-		CD=
 		for p in $(parent_devices "$BD"); do
 			BLOCK_TYPE="$(block_type "$p")"
 			if [ "$BLOCK_TYPE" = part ]; then
-				HOOKS="$HOOKS_LVM"
+				if [ -n "$CD" ]; then
+					CRYPTDEVICE="UUID=$(uuid "$p")"
+					CMD="cryptdevice=$CRYPTDEVICE:$CD $CMD"
+					HOOKS="$HOOKS_LVM_LUKS"
+				else
+					HOOKS="$HOOKS_LVM"
+				fi
 				break
 			elif [ "$BLOCK_TYPE" = crypt ]; then
 				CD="$(basename "$p")"
-			elif [ -n "$CD" ]; then
-				CRYPTDEVICE="$p"
-				if [ "$BLOCK_TYPE" = part ]; then
-					CRYPTDEVICE="UUID=$(uuid "$p")"
-				fi
-				CMD="cryptdevice=$CRYPTDEVICE:$CD $CMD"
-				HOOKS="$HOOKS_LVM_LUKS"
-				break
 			fi
 		done
 	elif [ "$BD_TYPE" = crypt ]; then
