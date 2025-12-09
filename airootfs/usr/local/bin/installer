@@ -2011,7 +2011,7 @@ start_install() {
 			printf "[Manager]\nDefaultTimeoutStopSec=10s\n" >"$MNT/etc/systemd/system.conf.d/system.conf" 2>&1
 			echo "setting a sane max journald log size"
 			mkdir --parents --verbose "$MNT/etc/systemd/journald.conf.d" 2>&1
-			printf "[Journal]\nSystemMaxUse=500M\n" >"$MNT/etc/systemd/journald.conf.d/journal.conf" 2>&1
+			printf "[Journal]\nMaxRetentionSec=1w\nSystemMaxUse=500M\n" >"$MNT/etc/systemd/journald.conf.d/journal.conf" 2>&1
 			echo "creating users..."
 			while IFS= read -r u; do
 				usr="${u%:*}"
