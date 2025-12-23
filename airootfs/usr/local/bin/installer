@@ -1889,24 +1889,25 @@ start_install() {
 		{
 			mkdir --parents --verbose "$MNT/etc/kernel" "$MNT/etc/mkinitcpio.conf.d" "$MNT/usr/share/mkinitcpio" "$MNT/etc/pacman.d" 2>&1
 			printf "%s" "$CMDLINE" >"$MNT/etc/kernel/cmdline" 2>&1
-			echo "HOOKS=($HOOKS)" >"$MNT/etc/mkinitcpio.conf.d/hooks.conf" 2>&1
+			printf "HOOKS=(%s)\n" "$HOOKS" >"$MNT/etc/mkinitcpio.conf.d/hooks.conf" 2>&1
 			{
-				echo "# mkinitcpio preset file for the '%PKGBASE%' package"
-				echo "ALL_kver=\"/boot/vmlinuz-%PKGBASE%\""
-				echo "PRESETS=('default')"
+				printf "# mkinitcpio preset file for the '%%PKGBASE%%' package\n\n"
+				printf "ALL_kver=\"/boot/vmlinuz-%%PKGBASE%%\""
+				printf "PRESETS=('default')\n\n"
 				if [ "$MODE" = UEFI ]; then
 					mkdir --parents "$MP_ESP/EFI/Linux"
 					printf "default_uki=\"%s/EFI/Linux/arch-%%PKGBASE%%.efi\"\n" "${MP_ESP#"$MNT"}"
-					echo "default_options=\"--splash /usr/share/systemd/bootctl/splash-arch.bmp\""
+					printf "default_cmdline=\"/etc/kernel/cmdline\"\n"
+					printf "default_splash=\"/usr/share/systemd/bootctl/splash-arch.bmp\"\n"
 				else
-					echo "default_image=\"/boot/initramfs-%PKGBASE%.img\""
+					printf "default_image=\"/boot/initramfs-%%PKGBASE%%.img\"\n"
 				fi
 			} >"$MNT/etc/hook.preset" 2>&1
 			{
-				echo "NoUpgrade = usr/share/mkinitcpio/hook.preset"
-				echo "Color"
-				echo "ILoveCandy"
-				echo "VerbosePkgLists"
+				printf "NoUpgrade = usr/share/mkinitcpio/hook.preset\n"
+				printf "Color\n"
+				printf "ILoveCandy\n"
+				printf "VerbosePkgLists\n"
 			} >"$MNT/etc/pacman.d/custom" 2>&1
 			if [ -n "$PACKS" ]; then
 				echo "the following packages will be installed (unless already installed):"
