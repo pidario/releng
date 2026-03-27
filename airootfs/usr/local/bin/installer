@@ -2036,7 +2036,7 @@ start_install() {
 			if [ -f "$TMP_AUTOLOGIN" ] && [ -n "$USER_AUTO" ] && [ "$USER_AUTO" != root ]; then
 				echo "setting user $USER_AUTO to autologin on TTY1"
 				mkdir --parents --verbose "$MNT/etc/systemd/system/getty@tty1.service.d" 2>&1
-				printf "[Service]\nExecStart=\nExecStart=-/usr/bin/agetty --autologin %s --noclear %%I \$TERM\nTTYVTDisallocate=no\n" "$USER_AUTO" >"$MNT/etc/systemd/system/getty@tty1.service.d/override.conf" 2>&1
+				printf "[Service]\nExecStart=\nExecStart=-/usr/bin/agetty --noreset --noclear --autologin %s - \${TERM}\n" "$USER_AUTO" >"$MNT/etc/systemd/system/getty@tty1.service.d/autologin-${USER_AUTO}.conf" 2>&1
 			fi
 			if [ "$MODE" = UEFI ]; then
 				echo "UKI setup"
