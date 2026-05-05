@@ -17,7 +17,6 @@ pamixer
 pipewire-pulse
 pv
 syslinux
-systemd-resolvconf
 tmux
 unrar
 unzip
