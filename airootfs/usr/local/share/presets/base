@@ -4,6 +4,7 @@ dialog
 gpm
 htop
 less
+lib32-glibc
 linux-lts
 linux-firmware
 lvm2
