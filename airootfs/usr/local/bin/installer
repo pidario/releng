@@ -1892,7 +1892,7 @@ start_install() {
 			printf "HOOKS=(%s)\n" "$HOOKS" >"$MNT/etc/mkinitcpio.conf.d/hooks.conf" 2>&1
 			{
 				printf "# mkinitcpio preset file for the '%%PKGBASE%%' package\n\n"
-				printf "ALL_kver=\"/boot/vmlinuz-%%PKGBASE%%\""
+				printf "ALL_kver=\"/boot/vmlinuz-%%PKGBASE%%\"\n\n"
 				printf "PRESETS=('default')\n\n"
 				if [ "$MODE" = UEFI ]; then
 					mkdir --parents "$MP_ESP/EFI/Linux"
