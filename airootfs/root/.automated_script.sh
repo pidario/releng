@@ -24,7 +24,7 @@ automated_script() {
             # is online, we use a transient systemd service that depends on network-online.target to download the
             # script rather than manually polling the target
             systemd-run --pty --quiet -p Wants=network-online.target -p After=network-online.target \
-            curl "${script}" --location --retry-connrefused --retry 10 --fail -s -o /tmp/startup_script
+                curl "${script}" --location --retry-connrefused --retry 10 --fail -s -o /tmp/startup_script
             rt=$?
         else
             cp "${script}" /tmp/startup_script
