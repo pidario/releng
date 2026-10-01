@@ -1912,12 +1912,14 @@ start_install() {
 			if [ -n "$PACKS" ]; then
 				echo "the following packages will be installed (unless already installed):"
 				echo "$PACKS"
+				pacman-key --init 2>&1
+				pacman-key --populate 2>&1
 				if [ "$METHOD" = OFFLINE ]; then
 					echo "bind mounting offline repo to chroot path"
 					mkdir --parents --verbose "${MNT}${REPO_DIR}" 2>&1 && mount --verbose --bind "$REPO_DIR" "${MNT}${REPO_DIR}" 2>&1
 					if ! (is_installed base); then
 						echo "bootstrapping base system using offline repo"
-						pacstrap -C "$PACMAN_OFFLINE" "$MNT" 2>&1
+						pacstrap -K -C "$PACMAN_OFFLINE" "$MNT" 2>&1
 					fi
 					sed --in-place "s|\[options\]|\[options\]\nInclude = /etc/pacman.d/custom|" "$MNT/etc/pacman.conf"
 					arch-chroot "$MNT" pacman --config "$PACMAN_OFFLINE" --sync --refresh --sysupgrade --quiet --noprogressbar --needed --noconfirm $PACKS 2>&1
@@ -1928,7 +1930,7 @@ start_install() {
 				else
 					if ! (is_installed base); then
 						echo "bootstrapping base system"
-						pacstrap "$MNT" 2>&1
+						pacstrap -K "$MNT" 2>&1
 					fi
 					sed --in-place "s|\[options\]|\[options\]\nInclude = /etc/pacman.d/custom|" "$MNT/etc/pacman.conf"
 					arch-chroot "$MNT" pacman --sync --refresh --sysupgrade --quiet --noprogressbar --needed --noconfirm $PACKS 2>&1
