@@ -1966,8 +1966,7 @@ start_install() {
 			printf "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.1.1\t%s\n" "$HOSTNAME" >"$MNT/etc/hosts" 2>&1
 			if (is_installed opendoas); then
 				echo "enabling wheel group"
-				printf "permit persist :wheel\n" >"$MNT/etc/doas.conf" 2>&1
-				printf "permit keepenv nopass :wheel\n" >"$MNT/etc/doas.conf" 2>&1
+				printf "permit persist keepenv :wheel\n" >"$MNT/etc/doas.conf" 2>&1
 				chown --verbose root:root "$MNT/etc/doas.conf" 2>&1
 				chmod --verbose 0600 "$MNT/etc/doas.conf" 2>&1
 			fi
