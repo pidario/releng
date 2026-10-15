@@ -32,7 +32,9 @@ rclone
 renameutils
 ripgrep
 rsync
+sbctl
 sbsigntools
+tcpdump
 traceroute
 usbutils
 wireguard-tools

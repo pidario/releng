@@ -20,6 +20,7 @@ ninja
 patch
 pkgconf
 podman
+postgresql-libs
 python
 python-pylint
 python-lsp-server
