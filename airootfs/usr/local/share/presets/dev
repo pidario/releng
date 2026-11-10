@@ -4,9 +4,6 @@ autopep8
 buildah
 clang
 cmake
-docker
-docker-buildx
-docker-compose
 fakeroot
 fzf
 gcc
