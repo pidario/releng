@@ -35,6 +35,7 @@ xarchiver
 xca
 xcb-util-errors
 xdg-desktop-portal-gtk
+xdg-desktop-portal-hyprland
 xdg-user-dirs
 xdg-utils
 xwayland-satellite

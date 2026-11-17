@@ -1,2 +1,5 @@
+qemu-desktop
 qemu-guest-agent
 open-vm-tools
+virt-manager
+virt-viewer
