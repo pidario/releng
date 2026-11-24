@@ -12,6 +12,8 @@ mandoc
 neovim
 networkmanager
 networkmanager-openconnect
+nvidia-open-lts
+nvtop
 opendoas
 openssh
 pamixer

@@ -14,26 +14,31 @@ CACHE_DIR="${PARENT}/airootfs/usr/local/share/repo/pkg"
 AUR_DIR="${PARENT}/aur"
 LOG_FILE="${PARENT}/pacman"
 MAIN_PACKS="${PARENT}/packs-list"
+# This is for packages I don't want installed when another package requires them:
+# for example, xdg-desktop-portal-gnome (for niri's screensharing) requires nautilus
+# just for its file picker. I don't need that, since xdg-desktop-portal-gtk already
+# has it and not having nautilus doesn't actually affect screensharing.
+ASSUME_INSTALLED="$(cat "${PARENT}/assume-installed")"
 
 mkdir --parents --verbose "$DB_DIR"
 
 # all presets except aur
-cat "${PRESETS_DIR}/base" "${PRESETS_DIR}/tools" "${PRESETS_DIR}/dev" "${PRESETS_DIR}/vm" "${PRESETS_DIR}/misc" "${PRESETS_DIR}/desktop" > "$MAIN_PACKS"
+cat "${PRESETS_DIR}/base" "${PRESETS_DIR}/tools" "${PRESETS_DIR}/dev" "${PRESETS_DIR}/vm" "${PRESETS_DIR}/misc" "${PRESETS_DIR}/desktop" >"$MAIN_PACKS"
 
 # aur dependencies (aur packages MUST be installed to local system for this to work)
-pacman --query --info - 2> /dev/null < "${PRESETS_DIR}/aur" \
-	| grep --extended-regexp "Depends On\s+:\s+.+" \
-	| xargs --max-args=1 | sort | uniq \
-	| grep --invert-match --extended-regexp "^Depends$|^On$|^None$|oracle|^:$" >> "$MAIN_PACKS"
+pacman --query --info - 2>/dev/null <"${PRESETS_DIR}/aur" |
+	grep --extended-regexp "Depends On\s+:\s+.+" |
+	xargs --max-args=1 | sort | uniq |
+	grep --invert-match --extended-regexp "^Depends$|^On$|^None$|oracle|^:$" >>"$MAIN_PACKS"
 
 # first, clean AUR_DIR, since it is manually managed (package pacman-contrib is needed)
 paccache --cachedir "$AUR_DIR" --remove --keep 1
 
 # download and "install" packages; saves them in CACHE_DIR and creates/updates DB_DIR
-pacman --sync --refresh --sysupgrade --needed --dbonly --logfile "${LOG_FILE}.log" --dbpath "$DB_DIR" --cachedir "$CACHE_DIR" - < "$MAIN_PACKS"
+pacman --assume-installed $ASSUME_INSTALLED --sync --refresh --sysupgrade --needed --dbonly --logfile "${LOG_FILE}.log" --dbpath "$DB_DIR" --cachedir "$CACHE_DIR" - <"$MAIN_PACKS"
 # install aur packages found in AUR_DIR and then move them to CACHE_DIR
 # to add new aur package, just copy it to AUR_DIR; the next time this script is run it will be handled
-if [ -n "$(find "$AUR_DIR" -mindepth 1 -maxdepth 1 2> /dev/null)" ]; then
+if [ -n "$(find "$AUR_DIR" -mindepth 1 -maxdepth 1 2>/dev/null)" ]; then
 	pacman --upgrade "${AUR_DIR}"/*.tar.zst --needed --dbonly --logfile "${LOG_FILE}.log" --dbpath "$DB_DIR"
 	mv --verbose "${AUR_DIR}"/*.tar.zst "${CACHE_DIR}/"
 fi
@@ -45,4 +50,4 @@ pacman --sync --clean --verbose --logfile "${LOG_FILE}.log" --cachedir "$CACHE_D
 
 repo-add --quiet "${CACHE_DIR}/pkg.db.tar.gz" $(find $CACHE_DIR/*.pkg.tar.* -type f -not -path "*.sig" -print0 | xargs --null)
 
-mv --verbose "${LOG_FILE}.log" "${LOG_FILE}_$(date +%Y-%m-%dT%H%M%S).log" 2> /dev/null
+mv --verbose "${LOG_FILE}.log" "${LOG_FILE}_$(date +%Y-%m-%dT%H%M%S).log" 2>/dev/null
